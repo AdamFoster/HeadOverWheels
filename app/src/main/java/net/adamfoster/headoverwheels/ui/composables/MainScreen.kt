@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -108,18 +109,14 @@ fun MainScreen(
                             if (isRadarConnected) {
                                 item { MetricTile(label = "Vehicle Dist", value = radarDistance) }
                             }
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                RideChart(
+                                    speedData = speedData,
+                                    elevationData = elevationData,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 2. Chart Section (Weighted)
-                    Box(modifier = Modifier.weight(1f)) {
-                        RideChart(
-                            speedData = speedData,
-                            elevationData = elevationData,
-                            modifier = Modifier.fillMaxSize()
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -205,7 +202,7 @@ fun MetricTile(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(1.3f),
+            .aspectRatio(1.5f),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
