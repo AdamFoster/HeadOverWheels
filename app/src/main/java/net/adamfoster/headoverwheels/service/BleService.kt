@@ -192,33 +192,58 @@ class BleService : Service() {
 
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
-            characteristic: BluetoothGattCharacteristic
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray
         ) {
-            if (characteristic.uuid == HEART_RATE_MEASUREMENT_CHAR_UUID) {
-                val heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 1)
-                val intent = Intent("heart_rate_update")
-                intent.setPackage(packageName)
-                intent.putExtra("heart_rate", heartRate)
-                sendBroadcast(intent)
-            } else if (characteristic.uuid == RADAR_DATA_CHAR_UUID) {
-                val data = characteristic.value
-                if (data != null && data.isNotEmpty()) {
-                    val distance = (data[1].toInt() and 0xFF)
-                    val intent = Intent("radar_update")
-                    intent.setPackage(packageName)
-                    intent.putExtra("distance", distance)
-                    sendBroadcast(intent)
+            when (characteristic.uuid) {
+                HEART_RATE_MEASUREMENT_CHAR_UUID -> {
+                    // The 'value' parameter contains the raw data from the sensor.
+                    if (value.isNotEmpty()) {
+                        // The heart rate value is at index 1 and is a UINT8 (unsigned 8-bit integer).
+                        // We convert the byte to an Int and use a bitwise AND to handle potential sign issues,
+                        // ensuring we get a positive value from 0-255.
+                        val heartRate = value[1].toInt() and 0xFF
+
+                        val intent = Intent("heart_rate_update")
+                        intent.setPackage(packageName)
+                        intent.putExtra("heart_rate", heartRate)
+                        sendBroadcast(intent)
+                    }
+                }
+
+                RADAR_DATA_CHAR_UUID -> {
+                    // The 'value' parameter is the same as the old characteristic.value
+                    if (value.isNotEmpty()) {
+                        val distance = (value[1].toInt() and 0xFF)
+                        val intent = Intent("radar_update")
+                        intent.setPackage(packageName)
+                        intent.putExtra("distance", distance)
+                        sendBroadcast(intent)
+                    }
                 }
             }
         }
     }
 
+
+
     private fun enableNotification(gatt: BluetoothGatt, service: BluetoothGattService, charUuid: UUID) {
         val characteristic = service.getCharacteristic(charUuid) ?: return
         gatt.setCharacteristicNotification(characteristic, true)
         val descriptor = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID)
-        descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        gatt.writeDescriptor(descriptor)
+        // The check for descriptor != null is important
+        if (descriptor != null) {
+            // For Android 13+ (API 33) and above, this is the recommended way
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                gatt.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            } else {
+                // For older versions, the deprecated method is still required
+                @Suppress("DEPRECATION")
+                descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                @Suppress("DEPRECATION")
+                gatt.writeDescriptor(descriptor)
+            }
+        }
     }
 
     private fun broadcastUpdate(action: String, status: String) {

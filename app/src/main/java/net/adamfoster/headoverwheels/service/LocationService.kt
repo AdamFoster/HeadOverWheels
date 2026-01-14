@@ -65,7 +65,6 @@ class LocationService : Service() {
 
             override fun onLocationResult(locationResult: LocationResult) {
                 broadcastGpsStatus("Fixed")
-                locationResult ?: return
                 
                 for (location in locationResult.locations){
                     var currentSpeed = location.speed
