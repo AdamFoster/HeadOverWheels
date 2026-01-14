@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,7 +40,7 @@ fun SettingsScreen(
                     title = { Text("Sensor Settings") },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
                 )
@@ -78,7 +78,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(32.dp))
                     
                     Button(onClick = onStartScan) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Scan")
+                        Icon(Icons.Filled.Refresh, contentDescription = "Scan")
                         Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                         Text("Restart Scan")
                     }

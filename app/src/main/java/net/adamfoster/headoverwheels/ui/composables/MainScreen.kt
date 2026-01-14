@@ -74,7 +74,7 @@ fun MainScreen(
                     title = { Text("Head Over Wheels") },
                     actions = {
                         IconButton(onClick = onNavigateSettings) {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings")
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
                         }
                     }
                 )
@@ -171,18 +171,18 @@ fun MainScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         StatusIcon(
-                            icon = Icons.Default.LocationOn,
+                            icon = Icons.Filled.LocationOn,
                             status = gpsStatus,
                             activeCondition = { it == "Fixed" },
                             warningCondition = { it == "Acquiring..." }
                         )
                         StatusIcon(
-                            icon = Icons.Default.Favorite,
+                            icon = Icons.Filled.Favorite,
                             status = hrSensorStatus,
                             activeCondition = { it == "connected" }
                         )
                         StatusIcon(
-                            icon = Icons.Default.Info,
+                            icon = Icons.Filled.Info,
                             status = radarSensorStatus,
                             activeCondition = { it == "Active" || it == "connected" }
                         )
