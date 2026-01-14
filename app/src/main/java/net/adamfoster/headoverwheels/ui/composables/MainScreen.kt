@@ -94,28 +94,33 @@ fun MainScreen(
                 ) {
                     // 1. Grid Section (Weighted)
                     Box(modifier = Modifier.weight(2f)) {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            item { MetricTile(label = "Speed", value = speed) }
-                            item { MetricTile(label = "Elevation", value = altitude) }
-                            item { MetricTile(label = "Incline", value = "0.0 %") }
-                            item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
-                            item { MetricTile(label = "Distance", value = distance) }
-                            item { MetricTile(label = "Heart Rate", value = heartRate) }
-                            if (isRadarConnected) {
-                                item { MetricTile(label = "Vehicle Dist", value = radarDistance) }
-                            }
-                            item(span = { GridItemSpan(maxLineSpan) }) {
-                                RideChart(
-                                    speedData = speedData,
-                                    elevationData = elevationData,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
+                        Column {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                item { MetricTile(label = "Speed", value = speed) }
+                                item { MetricTile(label = "Elevation", value = altitude) }
+                                item { MetricTile(label = "Incline", value = "0.0 %") }
+                                item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
+                                item { MetricTile(label = "Distance", value = distance) }
+                                item { MetricTile(label = "Heart Rate", value = heartRate) }
+                                if (isRadarConnected) {
+                                    item {
+                                        MetricTile(
+                                            label = "Vehicle Dist",
+                                            value = radarDistance
+                                        )
+                                    }
+                                }
+
+                            } // end grid
+                            RideChart(
+                                speedData = speedData,
+                                elevationData = elevationData,
+                                modifier = Modifier.fillMaxSize()
+                            )
                         }
                     }
 

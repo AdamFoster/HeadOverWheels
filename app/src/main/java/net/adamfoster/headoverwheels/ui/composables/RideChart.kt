@@ -45,12 +45,12 @@ fun RideChart(
                 setPinchZoom(false)
                 setDrawGridBackground(false)
                 legend.isEnabled = true
-                legend.textColor = AndroidColor.WHITE
+                legend.textColor = AndroidColor.DKGRAY
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     setDrawGridLines(false)
-                    textColor = AndroidColor.WHITE
+                    textColor = AndroidColor.DKGRAY
                     setDrawLabels(false)
                 }
                 
