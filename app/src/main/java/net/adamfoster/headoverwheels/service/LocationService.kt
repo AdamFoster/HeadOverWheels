@@ -213,7 +213,11 @@ class LocationService : Service() {
         return elapsedTimeOffset
     }
 
+    private var isLocationUpdatesActive = false
+
     private fun startLocationUpdates() {
+        if (isLocationUpdatesActive) return
+
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
             .setMinUpdateIntervalMillis(500)
             .build()
@@ -234,6 +238,7 @@ class LocationService : Service() {
             locationCallback,
             Looper.getMainLooper()
         )
+        isLocationUpdatesActive = true
     }
 
     override fun onBind(intent: Intent?): IBinder? {

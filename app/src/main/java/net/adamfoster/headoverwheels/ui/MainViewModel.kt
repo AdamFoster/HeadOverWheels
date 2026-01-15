@@ -106,8 +106,8 @@ class MainViewModel : ViewModel() {
         }
         
         viewModelScope.launch {
-            repository.isRecording.collect { isRecording ->
-                 if (!isRecording && repository.distance.value == 0.0) {
+            repository.distance.collect { distance ->
+                 if (distance == 0.0) {
                      _speedData.value = emptyList()
                      _elevationData.value = emptyList()
                      dataPointIndex = 0f

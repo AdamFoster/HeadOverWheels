@@ -20,7 +20,6 @@ import net.adamfoster.headoverwheels.data.RideRepository
 import net.adamfoster.headoverwheels.service.ble.BleSensorManager
 import net.adamfoster.headoverwheels.service.ble.HeartRateManager
 import net.adamfoster.headoverwheels.service.ble.RadarManager
-import java.util.*
 
 @SuppressLint("MissingPermission")
 class BleService : Service() {
@@ -110,7 +109,7 @@ class BleService : Service() {
             if (uuids.contains(ParcelUuid(HeartRateManager.HEART_RATE_SERVICE_UUID))) {
                 if (!hrManager.isConnected()) {
                     Log.i("BleService", "Found HR Sensor: ${device.address}")
-                    val gatt = device.connectGatt(this@BleService, true, gattCallback)
+                    val gatt = device.connectGatt(this@BleService, false, gattCallback)
                     hrManager.setGatt(gatt)
                     updateNotification("Connecting HR Sensor...")
                 }
@@ -120,7 +119,7 @@ class BleService : Service() {
             if (uuids.contains(ParcelUuid(RadarManager.RADAR_SERVICE_UUID))) {
                  if (!radarManager.isConnected()) {
                     Log.i("BleService", "Found Radar: ${device.address}")
-                    val gatt = device.connectGatt(this@BleService, true, gattCallback)
+                    val gatt = device.connectGatt(this@BleService, false, gattCallback)
                     radarManager.setGatt(gatt)
                     updateNotification("Connecting Radar...")
                 }

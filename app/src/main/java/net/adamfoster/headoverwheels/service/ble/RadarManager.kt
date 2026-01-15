@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import net.adamfoster.headoverwheels.data.RideRepository
 import java.util.UUID
 

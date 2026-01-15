@@ -2,7 +2,6 @@ package net.adamfoster.headoverwheels.service.ble
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.content.Context
@@ -65,7 +64,15 @@ class HeartRateManager(private val repository: RideRepository) : BleSensorManage
 
     override fun onCharacteristicChanged(uuid: UUID, value: ByteArray) {
         if (uuid == HEART_RATE_MEASUREMENT_CHAR_UUID && value.isNotEmpty()) {
-            val heartRate = value[1].toInt() and 0xFF
+            val flags = value[0].toInt()
+            val isHeartRateInUInt16 = (flags and 1) != 0
+            val heartRate = if (isHeartRateInUInt16) {
+                // UInt16: 2nd and 3rd bytes (Little Endian)
+                ((value[2].toInt() and 0xFF) shl 8) or (value[1].toInt() and 0xFF)
+            } else {
+                // UInt8: 2nd byte
+                value[1].toInt() and 0xFF
+            }
             repository.updateHeartRate(heartRate)
         }
     }
