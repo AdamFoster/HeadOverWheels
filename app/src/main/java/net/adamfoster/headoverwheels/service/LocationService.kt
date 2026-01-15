@@ -10,17 +10,15 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.*
 import android.os.Looper
-import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.adamfoster.headoverwheels.data.RideData
 import net.adamfoster.headoverwheels.db.RideDatabase
-import java.util.Timer
-import java.util.TimerTask
 
 class LocationService : Service() {
 
@@ -44,7 +42,6 @@ class LocationService : Service() {
     private var totalDistance = 0.0 // in meters
     private var startTime = 0L
     private var elapsedTimeOffset = 0L // Time accumulated from previous segments
-    private var timer: Timer? = null
 
     // DB
     private lateinit var db: RideDatabase
@@ -138,14 +135,15 @@ class LocationService : Service() {
                 }
             }
         }
-        
-        // Start a timer to broadcast elapsed time independent of GPS updates
-        timer = Timer()
-        timer?.scheduleAtFixedRate(object : TimerTask() {
-            override fun run() {
+
+        // New coroutine-based timer
+        scope.launch(Dispatchers.Default) {
+            while (true) {
                 broadcastTime()
+                delay(1000) // This is a suspending function, non-blocking
             }
-        }, 0, 1000)
+        }
+
     }
 
     private fun createNotificationChannel() {
@@ -279,6 +277,5 @@ class LocationService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        timer?.cancel()
     }
 }
