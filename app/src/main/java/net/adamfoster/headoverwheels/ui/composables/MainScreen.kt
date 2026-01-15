@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -53,6 +52,7 @@ fun MainScreen(
     speed: String,
     altitude: String,
     distance: String,
+    incline: String,
     elapsedTime: String,
     heartRate: String,
     hrSensorStatus: String,
@@ -102,7 +102,7 @@ fun MainScreen(
                             ) {
                                 item { MetricTile(label = "Speed", value = speed) }
                                 item { MetricTile(label = "Elevation", value = altitude) }
-                                item { MetricTile(label = "Incline", value = "0.0 %") }
+                                item { MetricTile(label = "Incline", value = incline) }
                                 item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
                                 item { MetricTile(label = "Distance", value = distance) }
                                 item { MetricTile(label = "Heart Rate", value = heartRate) }
@@ -261,6 +261,7 @@ fun DefaultPreview() {
             speed = "12.3 km/h",
             altitude = "123 m",
             distance = "45.6 km",
+            incline = "1.5 %",
             elapsedTime = "01:23:45",
             heartRate = "120",
             hrSensorStatus = "connected",

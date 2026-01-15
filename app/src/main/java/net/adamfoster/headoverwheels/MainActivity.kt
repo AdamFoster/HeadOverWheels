@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity() {
     private val speed = mutableStateOf("0.0 km/h")
     private val altitude = mutableStateOf("0 m")
     private val distance = mutableStateOf("0.0 km")
+    private val incline = mutableStateOf("0.0 %")
     private val elapsedTime = mutableStateOf("00:00:00")
     private val heartRate = mutableStateOf("---")
     private val hrSensorStatus = mutableStateOf("disconnected")
@@ -59,12 +61,14 @@ class MainActivity : ComponentActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val newSpeed = intent?.getFloatExtra("speed", 0f) ?: 0f
             val newAltitude = intent?.getDoubleExtra("altitude", 0.0) ?: 0.0
+            val newIncline = intent?.getDoubleExtra("incline", 0.0) ?: 0.0
             val totalDistanceMeters = intent?.getDoubleExtra("total_distance", 0.0) ?: 0.0
             
             val speedKmh = (newSpeed * 3.6f)
             
             speed.value = "${speedKmh.roundToInt()} km/h"
             altitude.value = "${newAltitude.roundToInt()} m"
+            incline.value = String.format(Locale.getDefault(), "%.1f %%", newIncline)
             distance.value = String.format(Locale.getDefault(), "%.1f km", totalDistanceMeters / 1000.0)
             
             // Append chart data
@@ -140,6 +144,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         val permissionsToRequest = mutableListOf<String>()
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -174,6 +179,7 @@ class MainActivity : ComponentActivity() {
                         speed = speed.value,
                         altitude = altitude.value,
                         distance = distance.value,
+                        incline = incline.value,
                         elapsedTime = elapsedTime.value,
                         heartRate = heartRate.value,
                         hrSensorStatus = hrSensorStatus.value,

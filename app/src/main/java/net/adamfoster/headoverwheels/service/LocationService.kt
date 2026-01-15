@@ -31,11 +31,13 @@ class LocationService : Service() {
         const val ACTION_PAUSE_RIDE = "net.adamfoster.headoverwheels.action.PAUSE_RIDE"
         const val ACTION_RESET_RIDE = "net.adamfoster.headoverwheels.action.RESET_RIDE"
         const val ACTION_REQUEST_STATUS = "net.adamfoster.headoverwheels.action.REQUEST_STATUS"
+        const val INCLINE_SMOOTHING_WINDOW = 5
     }
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private var lastLocation: android.location.Location? = null
+    private val recentLocations = java.util.ArrayDeque<android.location.Location>(INCLINE_SMOOTHING_WINDOW)
 
     // Ride State
     private var isRecording = false
@@ -83,6 +85,25 @@ class LocationService : Service() {
                         totalDistance += lastLocation!!.distanceTo(location)
                     }
 
+                    // Incline Calculation
+                    recentLocations.addLast(location)
+                    if (recentLocations.size > INCLINE_SMOOTHING_WINDOW) {
+                        recentLocations.removeFirst()
+                    }
+
+                    var currentIncline = 0.0
+                    if (recentLocations.size >= 2) {
+                        val oldest = recentLocations.first
+                        val newest = recentLocations.last
+                        val dist = oldest.distanceTo(newest)
+                        val altDiff = newest.altitude - oldest.altitude
+                        
+                        // Avoid division by zero and extremely small distances which cause noise
+                        if (dist > 10.0) {
+                            currentIncline = (altDiff / dist) * 100.0
+                        }
+                    }
+
                     // DB Insertion (only if recording)
                     if (isRecording) {
                         scope.launch {
@@ -107,6 +128,7 @@ class LocationService : Service() {
                     intent.putExtra("longitude", location.longitude)
                     intent.putExtra("speed", currentSpeed)
                     intent.putExtra("altitude", location.altitude)
+                    intent.putExtra("incline", currentIncline)
                     intent.putExtra("timestamp", System.currentTimeMillis())
                     
                     // Broadcast persistent metrics
@@ -194,6 +216,7 @@ class LocationService : Service() {
         startTime = 0L
         elapsedTimeOffset = 0L
         totalDistance = 0.0
+        recentLocations.clear()
         broadcastStatus()
         broadcastTime() // Reset UI to 00:00:00
     }
