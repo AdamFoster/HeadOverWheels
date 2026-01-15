@@ -16,9 +16,13 @@ import android.os.IBinder
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import net.adamfoster.headoverwheels.data.RideRepository
+import net.adamfoster.headoverwheels.service.ble.BleSensorManager
+import net.adamfoster.headoverwheels.service.ble.HeartRateManager
+import net.adamfoster.headoverwheels.service.ble.RadarManager
 import java.util.*
 
-@SuppressLint("MissingPermission") // Permissions are checked in MainActivity before starting
+@SuppressLint("MissingPermission")
 class BleService : Service() {
 
     companion object {
@@ -29,19 +33,8 @@ class BleService : Service() {
 
     private var bluetoothAdapter: BluetoothAdapter? = null
     
-    // Separate GATT clients for separate devices
-    private var hrGatt: BluetoothGatt? = null
-    private var radarGatt: BluetoothGatt? = null
-
-    // Heart Rate
-    private val HEART_RATE_SERVICE_UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
-    private val HEART_RATE_MEASUREMENT_CHAR_UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
-    
-    // Garmin Varia Radar
-    private val RADAR_SERVICE_UUID = UUID.fromString("6AFF7000-56C8-4203-9068-185C32196F33")
-    private val RADAR_DATA_CHAR_UUID = UUID.fromString("6AFF7101-56C8-4203-9068-185C32196F33")
-
-    private val CLIENT_CHARACTERISTIC_CONFIG_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+    private lateinit var hrManager: HeartRateManager
+    private lateinit var radarManager: RadarManager
 
     private var isScanning = false
 
@@ -52,6 +45,10 @@ class BleService : Service() {
 
         val bluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
+        
+        // Initialize managers with Repository
+        hrManager = HeartRateManager(RideRepository)
+        radarManager = RadarManager(RideRepository)
     }
 
     private fun createNotificationChannel() {
@@ -83,8 +80,6 @@ class BleService : Service() {
         if (intent?.action == ACTION_START_SCAN) {
              startScanning()
         } else {
-             // Auto-start scanning on first launch if permissions allow?
-             // Yes, for now.
              startScanning()
         }
         return START_STICKY
@@ -94,10 +89,9 @@ class BleService : Service() {
         if (isScanning) return
         val scanner = bluetoothAdapter?.bluetoothLeScanner ?: return
 
-        // We filter for devices advertising ANY of our target services
         val filters = listOf(
-            ScanFilter.Builder().setServiceUuid(ParcelUuid(HEART_RATE_SERVICE_UUID)).build(),
-            ScanFilter.Builder().setServiceUuid(ParcelUuid(RADAR_SERVICE_UUID)).build()
+            ScanFilter.Builder().setServiceUuid(ParcelUuid(HeartRateManager.HEART_RATE_SERVICE_UUID)).build(),
+            ScanFilter.Builder().setServiceUuid(ParcelUuid(RadarManager.RADAR_SERVICE_UUID)).build()
         )
         val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
 
@@ -113,80 +107,83 @@ class BleService : Service() {
             val uuids = result.scanRecord?.serviceUuids ?: return
 
             // Check for Heart Rate
-            if (uuids.contains(ParcelUuid(HEART_RATE_SERVICE_UUID))) {
-                if (hrGatt == null) {
+            if (uuids.contains(ParcelUuid(HeartRateManager.HEART_RATE_SERVICE_UUID))) {
+                if (!hrManager.isConnected()) {
                     Log.i("BleService", "Found HR Sensor: ${device.address}")
-                    hrGatt = device.connectGatt(this@BleService, true, gattCallback)
+                    val gatt = device.connectGatt(this@BleService, true, gattCallback)
+                    hrManager.setGatt(gatt)
                     updateNotification("Connecting HR Sensor...")
                 }
             }
             
             // Check for Radar
-            if (uuids.contains(ParcelUuid(RADAR_SERVICE_UUID))) {
-                 if (radarGatt == null) {
+            if (uuids.contains(ParcelUuid(RadarManager.RADAR_SERVICE_UUID))) {
+                 if (!radarManager.isConnected()) {
                     Log.i("BleService", "Found Radar: ${device.address}")
-                    radarGatt = device.connectGatt(this@BleService, true, gattCallback)
+                    val gatt = device.connectGatt(this@BleService, true, gattCallback)
+                    radarManager.setGatt(gatt)
                     updateNotification("Connecting Radar...")
                 }
-            }
-            
-            // Stop scanning if both connected? 
-            // For stability, keeping scanning on might be battery draining.
-            // But if one disconnects, we might want to auto-reconnect.
-            // For now, let's keep scanning or stop if both are found.
-            if (hrGatt != null && radarGatt != null) {
-                 // bluetoothAdapter?.bluetoothLeScanner?.stopScan(this)
-                 // isScanning = false
             }
         }
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
-        override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.i("BleService", "Connected to GATT server: ${gatt?.device?.address}")
-                gatt?.discoverServices()
+                Log.i("BleService", "Connected to GATT server: ${gatt.device.address}")
+                gatt.discoverServices()
                 
-                if (gatt == hrGatt) {
+                // We need to know which manager this gatt belongs to.
+                // Since we have separate managers but share a callback in this implementation, 
+                // we can check the service list later or match device address if we stored it.
+                // However, the managers store their gatt reference.
+                
+                // Simple check:
+                // This logic assumes 1 device per type.
+                
+                // We'll dispatch to both, they can check if it's their gatt (by reference equality) 
+                // BUT we passed 'gatt' to 'setGatt' before connection completed in scanCallback.
+                // So the equality check works.
+                
+                if (hrManager.isConnected() && isGattForManager(gatt, hrManager)) {
+                     hrManager.onConnected(gatt)
                      updateNotification("HR Connected")
-                     // Wait for services discovered to update UI
-                } else if (gatt == radarGatt) {
+                }
+                if (radarManager.isConnected() && isGattForManager(gatt, radarManager)) {
+                     radarManager.onConnected(gatt)
                      updateNotification("Radar Connected")
-                     broadcastUpdate("radar_status", "connected")
                 }
                 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i("BleService", "Disconnected from GATT server.")
-                if (gatt == hrGatt) {
-                    hrGatt = null
-                    val intent = Intent("heart_rate_update")
-                    intent.putExtra("heart_rate", 0)
-                    sendBroadcast(intent)
-                    updateNotification("HR Disconnected")
-                } else if (gatt == radarGatt) {
-                    radarGatt = null
-                    broadcastUpdate("radar_status", "disconnected")
-                    updateNotification("Radar Disconnected")
+                
+                 if (hrManager.isConnected() && isGattForManager(gatt, hrManager)) {
+                     hrManager.onDisconnected()
+                     updateNotification("HR Disconnected")
                 }
-                gatt?.close()
-                // Restart scanning if disconnected?
+                if (radarManager.isConnected() && isGattForManager(gatt, radarManager)) {
+                     radarManager.onDisconnected()
+                     updateNotification("Radar Disconnected")
+                }
+                
+                gatt.close()
                 startScanning()
             }
         }
+        
+        // Reflection or additional field would be cleaner, but for now:
+        // We can't easily check "isGattForManager" without exposing the internal gatt from manager.
+        // Let's rely on the fact that we only have two.
+        
+        private fun isGattForManager(gatt: BluetoothGatt, manager: BleSensorManager): Boolean {
+             return manager.getGatt() == gatt
+        }
 
-        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                // Determine which services are available and subscribe
-                val hrService = gatt?.getService(HEART_RATE_SERVICE_UUID)
-                if (hrService != null) {
-                    enableNotification(gatt, hrService, HEART_RATE_MEASUREMENT_CHAR_UUID)
-                }
-
-                val radarService = gatt?.getService(RADAR_SERVICE_UUID)
-                if (radarService != null) {
-                    enableNotification(gatt, radarService, RADAR_DATA_CHAR_UUID)
-                    broadcastUpdate("radar_status", "active")
-                }
+                hrManager.onServicesDiscovered(gatt)
+                radarManager.onServicesDiscovered(gatt)
             }
         }
 
@@ -195,63 +192,16 @@ class BleService : Service() {
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
-            when (characteristic.uuid) {
-                HEART_RATE_MEASUREMENT_CHAR_UUID -> {
-                    // The 'value' parameter contains the raw data from the sensor.
-                    if (value.isNotEmpty()) {
-                        // The heart rate value is at index 1 and is a UINT8 (unsigned 8-bit integer).
-                        // We convert the byte to an Int and use a bitwise AND to handle potential sign issues,
-                        // ensuring we get a positive value from 0-255.
-                        val heartRate = value[1].toInt() and 0xFF
-
-                        val intent = Intent("heart_rate_update")
-                        intent.setPackage(packageName)
-                        intent.putExtra("heart_rate", heartRate)
-                        sendBroadcast(intent)
-                    }
-                }
-
-                RADAR_DATA_CHAR_UUID -> {
-                    // The 'value' parameter is the same as the old characteristic.value
-                    if (value.isNotEmpty()) {
-                        val distance = (value[1].toInt() and 0xFF)
-                        val intent = Intent("radar_update")
-                        intent.setPackage(packageName)
-                        intent.putExtra("distance", distance)
-                        sendBroadcast(intent)
-                    }
-                }
-            }
+             hrManager.onCharacteristicChanged(characteristic.uuid, value)
+             radarManager.onCharacteristicChanged(characteristic.uuid, value)
         }
     }
-
-
-
-    private fun enableNotification(gatt: BluetoothGatt, service: BluetoothGattService, charUuid: UUID) {
-        val characteristic = service.getCharacteristic(charUuid) ?: return
-        gatt.setCharacteristicNotification(characteristic, true)
-        val descriptor = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID)
-        // The check for descriptor != null is important
-        if (descriptor != null) {
-            // For Android 13+ (API 33) and above, this is the recommended way
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                gatt.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-            } else {
-                // For older versions, the deprecated method is still required
-                @Suppress("DEPRECATION")
-                descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                @Suppress("DEPRECATION")
-                gatt.writeDescriptor(descriptor)
-            }
-        }
-    }
-
-    private fun broadcastUpdate(action: String, status: String) {
-        val intent = Intent(action)
-        intent.setPackage(packageName)
-        intent.putExtra("status", status)
-        sendBroadcast(intent)
-    }
+    
+    // Quick fix helper for the "isGattForManager" issue:
+    // We don't strictly need to filter in onConnected because discoverServices will sort it out,
+    // and onDisconnected will clean up.
+    // However, knowing which one connected allows for better notifications.
+    // I'll leave the notification logic generic or check ServicesDiscovered for precise notifications.
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -259,10 +209,8 @@ class BleService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        hrGatt?.close()
-        radarGatt?.close()
-        hrGatt = null
-        radarGatt = null
+        hrManager.close()
+        radarManager.close()
         bluetoothAdapter?.bluetoothLeScanner?.stopScan(scanCallback)
     }
 }

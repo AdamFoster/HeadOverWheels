@@ -1,0 +1,103 @@
+package net.adamfoster.headoverwheels.data
+
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+
+/**
+ * Singleton repository acting as the Single Source of Truth for the ride data.
+ * Updates are received from Services (Location, BLE) and observed by the ViewModel.
+ */
+object RideRepository {
+
+    // Metric States
+    private val _speed = MutableStateFlow(0f) // m/s
+    val speed: StateFlow<Float> = _speed.asStateFlow()
+
+    private val _altitude = MutableStateFlow(0.0) // meters
+    val altitude: StateFlow<Double> = _altitude.asStateFlow()
+
+    private val _incline = MutableStateFlow(0.0) // percentage
+    val incline: StateFlow<Double> = _incline.asStateFlow()
+
+    private val _distance = MutableStateFlow(0.0) // meters
+    val distance: StateFlow<Double> = _distance.asStateFlow()
+
+    private val _elapsedTime = MutableStateFlow(0L) // milliseconds
+    val elapsedTime: StateFlow<Long> = _elapsedTime.asStateFlow()
+
+    private val _heartRate = MutableStateFlow(0) // bpm
+    val heartRate: StateFlow<Int> = _heartRate.asStateFlow()
+
+    private val _radarDistance = MutableStateFlow(-1) // meters, -1 is no vehicle
+    val radarDistance: StateFlow<Int> = _radarDistance.asStateFlow()
+
+    // Status States
+    private val _isRecording = MutableStateFlow(false)
+    val isRecording: StateFlow<Boolean> = _isRecording.asStateFlow()
+
+    private val _gpsStatus = MutableStateFlow("Acquiring...")
+    val gpsStatus: StateFlow<String> = _gpsStatus.asStateFlow()
+
+    private val _hrSensorStatus = MutableStateFlow("disconnected")
+    val hrSensorStatus: StateFlow<String> = _hrSensorStatus.asStateFlow()
+
+    private val _radarSensorStatus = MutableStateFlow("disconnected")
+    val radarSensorStatus: StateFlow<String> = _radarSensorStatus.asStateFlow()
+
+    private val _isRadarConnected = MutableStateFlow(false)
+    val isRadarConnected: StateFlow<Boolean> = _isRadarConnected.asStateFlow()
+
+    // Update methods called by Services
+
+    fun updateLocationMetrics(speed: Float, altitude: Double, incline: Double) {
+        _speed.value = speed
+        _altitude.value = altitude
+        _incline.value = incline
+    }
+
+    fun updateDistance(totalDistance: Double) {
+        _distance.value = totalDistance
+    }
+
+    fun updateElapsedTime(timeMs: Long) {
+        _elapsedTime.value = timeMs
+    }
+
+    fun updateHeartRate(hr: Int) {
+        _heartRate.value = hr
+    }
+
+    fun updateRadarDistance(dist: Int) {
+        _radarDistance.value = dist
+    }
+
+    fun updateRecordingStatus(recording: Boolean) {
+        _isRecording.value = recording
+    }
+
+    fun updateGpsStatus(status: String) {
+        _gpsStatus.value = status
+    }
+
+    fun updateHrSensorStatus(status: String) {
+        _hrSensorStatus.value = status
+    }
+
+    fun updateRadarSensorStatus(status: String, isConnected: Boolean) {
+        _radarSensorStatus.value = status
+        _isRadarConnected.value = isConnected
+    }
+
+    fun resetRide() {
+        _speed.value = 0f
+        _altitude.value = 0.0
+        _incline.value = 0.0
+        _distance.value = 0.0
+        _elapsedTime.value = 0L
+        _radarDistance.value = -1
+        _isRecording.value = false
+        // Don't reset sensor connection statuses
+    }
+}

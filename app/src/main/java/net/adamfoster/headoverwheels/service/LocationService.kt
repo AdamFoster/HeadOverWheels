@@ -15,9 +15,11 @@ import androidx.core.app.ActivityCompat
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.adamfoster.headoverwheels.data.RideData
+import net.adamfoster.headoverwheels.data.RideRepository
 import net.adamfoster.headoverwheels.db.RideDatabase
 
 class LocationService : Service() {
@@ -28,7 +30,6 @@ class LocationService : Service() {
         const val ACTION_START_RIDE = "net.adamfoster.headoverwheels.action.START_RIDE"
         const val ACTION_PAUSE_RIDE = "net.adamfoster.headoverwheels.action.PAUSE_RIDE"
         const val ACTION_RESET_RIDE = "net.adamfoster.headoverwheels.action.RESET_RIDE"
-        const val ACTION_REQUEST_STATUS = "net.adamfoster.headoverwheels.action.REQUEST_STATUS"
         const val INCLINE_SMOOTHING_WINDOW = 5
     }
 
@@ -46,6 +47,7 @@ class LocationService : Service() {
     // DB
     private lateinit var db: RideDatabase
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val repository = RideRepository
 
     override fun onCreate() {
         super.onCreate()
@@ -59,16 +61,16 @@ class LocationService : Service() {
             override fun onLocationAvailability(availability: LocationAvailability) {
                 super.onLocationAvailability(availability)
                 val status = if (availability.isLocationAvailable) "Fixed" else "Searching..."
-                broadcastGpsStatus(status)
+                repository.updateGpsStatus(status)
             }
 
             override fun onLocationResult(locationResult: LocationResult) {
-                broadcastGpsStatus("Fixed")
+                repository.updateGpsStatus("Fixed")
                 
                 for (location in locationResult.locations){
                     var currentSpeed = location.speed
                     
-                    // Fallback: Calculate speed if missing (common in Emulator)
+                    // Fallback: Calculate speed if missing
                     if (!location.hasSpeed() && lastLocation != null) {
                         val distanceMeters = location.distanceTo(lastLocation!!)
                         val timeDeltaSeconds = (location.time - lastLocation!!.time) / 1000.0
@@ -95,11 +97,14 @@ class LocationService : Service() {
                         val dist = oldest.distanceTo(newest)
                         val altDiff = newest.altitude - oldest.altitude
                         
-                        // Avoid division by zero and extremely small distances which cause noise
                         if (dist > 10.0) {
                             currentIncline = (altDiff / dist) * 100.0
                         }
                     }
+
+                    // Update Repository
+                    repository.updateLocationMetrics(currentSpeed, location.altitude, currentIncline)
+                    repository.updateDistance(totalDistance)
 
                     // DB Insertion (only if recording)
                     if (isRecording) {
@@ -109,38 +114,23 @@ class LocationService : Service() {
                                     timestamp = System.currentTimeMillis(),
                                     speed = currentSpeed,
                                     altitude = location.altitude,
-                                    distance = totalDistance / 1000.0, // Store in KM
-                                    heartRate = 0 
+                                    distance = totalDistance / 1000.0,
+                                    heartRate = repository.heartRate.value 
                                 )
                             )
                         }
                     }
 
                     lastLocation = location
-
-                    // Broadcast location update
-                    val intent = Intent("location_update")
-                    intent.setPackage(packageName)
-                    intent.putExtra("latitude", location.latitude)
-                    intent.putExtra("longitude", location.longitude)
-                    intent.putExtra("speed", currentSpeed)
-                    intent.putExtra("altitude", location.altitude)
-                    intent.putExtra("incline", currentIncline)
-                    intent.putExtra("timestamp", System.currentTimeMillis())
-                    
-                    // Broadcast persistent metrics
-                    intent.putExtra("total_distance", totalDistance)
-                    intent.putExtra("is_recording", isRecording)
-                    sendBroadcast(intent)
                 }
             }
         }
 
-        // New coroutine-based timer
+        // Timer Loop
         scope.launch(Dispatchers.Default) {
             while (true) {
-                broadcastTime()
-                delay(1000) // This is a suspending function, non-blocking
+                repository.updateElapsedTime(getElapsedTime())
+                delay(1000)
             }
         }
 
@@ -185,10 +175,8 @@ class LocationService : Service() {
                 resetRide()
                 updateNotification("Ready to ride")
             }
-            ACTION_REQUEST_STATUS -> broadcastStatus()
         }
         
-        // Always ensure location updates are running
         startLocationUpdates()
         return START_STICKY
     }
@@ -197,7 +185,7 @@ class LocationService : Service() {
         if (!isRecording) {
             isRecording = true
             startTime = System.currentTimeMillis()
-            broadcastStatus()
+            repository.updateRecordingStatus(true)
         }
     }
 
@@ -205,7 +193,7 @@ class LocationService : Service() {
         if (isRecording) {
             isRecording = false
             elapsedTimeOffset += System.currentTimeMillis() - startTime
-            broadcastStatus()
+            repository.updateRecordingStatus(false)
         }
     }
 
@@ -215,8 +203,7 @@ class LocationService : Service() {
         elapsedTimeOffset = 0L
         totalDistance = 0.0
         recentLocations.clear()
-        broadcastStatus()
-        broadcastTime() // Reset UI to 00:00:00
+        repository.resetRide()
     }
     
     private fun getElapsedTime(): Long {
@@ -224,27 +211,6 @@ class LocationService : Service() {
             return elapsedTimeOffset + (System.currentTimeMillis() - startTime)
         }
         return elapsedTimeOffset
-    }
-
-    private fun broadcastTime() {
-        val intent = Intent("ride_timer_update")
-        intent.setPackage(packageName)
-        intent.putExtra("elapsed_time_ms", getElapsedTime())
-        sendBroadcast(intent)
-    }
-
-    private fun broadcastStatus() {
-        val intent = Intent("ride_status_update")
-        intent.setPackage(packageName)
-        intent.putExtra("is_recording", isRecording)
-        sendBroadcast(intent)
-    }
-
-    private fun broadcastGpsStatus(status: String) {
-        val intent = Intent("gps_status")
-        intent.setPackage(packageName)
-        intent.putExtra("status", status)
-        sendBroadcast(intent)
     }
 
     private fun startLocationUpdates() {
@@ -277,5 +243,6 @@ class LocationService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+        scope.cancel()
     }
 }
