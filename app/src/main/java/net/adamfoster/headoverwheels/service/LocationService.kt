@@ -36,7 +36,7 @@ class LocationService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private var lastLocation: android.location.Location? = null
-    private val recentLocations = java.util.ArrayDeque<android.location.Location>(INCLINE_SMOOTHING_WINDOW)
+    private val inclineCalculator = InclineCalculator()
 
     // Ride State
     private var isRecording = false
@@ -85,22 +85,7 @@ class LocationService : Service() {
                     }
 
                     // Incline Calculation
-                    recentLocations.addLast(location)
-                    if (recentLocations.size > INCLINE_SMOOTHING_WINDOW) {
-                        recentLocations.removeFirst()
-                    }
-
-                    var currentIncline = 0.0
-                    if (recentLocations.size >= 2) {
-                        val oldest = recentLocations.first
-                        val newest = recentLocations.last
-                        val dist = oldest.distanceTo(newest)
-                        val altDiff = newest.altitude - oldest.altitude
-                        
-                        if (dist > 10.0) {
-                            currentIncline = (altDiff / dist) * 100.0
-                        }
-                    }
+                    val currentIncline = inclineCalculator.calculateIncline(location)
 
                     // Update Repository
                     repository.updateLocationMetrics(currentSpeed, location.altitude, currentIncline)
@@ -202,7 +187,7 @@ class LocationService : Service() {
         startTime = 0L
         elapsedTimeOffset = 0L
         totalDistance = 0.0
-        recentLocations.clear()
+        inclineCalculator.reset()
         repository.resetRide()
     }
     
