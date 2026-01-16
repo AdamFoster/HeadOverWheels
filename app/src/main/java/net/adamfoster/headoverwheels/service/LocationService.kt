@@ -30,7 +30,6 @@ class LocationService : Service() {
         const val ACTION_START_RIDE = "net.adamfoster.headoverwheels.action.START_RIDE"
         const val ACTION_PAUSE_RIDE = "net.adamfoster.headoverwheels.action.PAUSE_RIDE"
         const val ACTION_RESET_RIDE = "net.adamfoster.headoverwheels.action.RESET_RIDE"
-        const val INCLINE_SMOOTHING_WINDOW = 5
     }
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient

@@ -4,7 +4,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import net.adamfoster.headoverwheels.data.RideRepository
 import org.junit.Test
-import java.util.UUID
 
 class HeartRateManagerTest {
 

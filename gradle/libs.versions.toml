@@ -13,8 +13,8 @@ room = "2.8.4"
 playServicesLocation = "21.3.0"
 navigationCompose = "2.9.6"
 ksp = "2.3.3"
-mockk = "1.13.10"
-coroutinesTest = "1.8.0"
+mockk = "1.14.7"
+coroutinesTest = "1.10.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
