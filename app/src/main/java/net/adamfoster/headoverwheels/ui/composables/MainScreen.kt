@@ -58,6 +58,7 @@ fun MainScreen(
     hrSensorStatus: String,
     radarSensorStatus: String,
     radarDistance: String = "---",
+    radarDistanceRaw: Int = -1,
     isRadarConnected: Boolean = false,
     gpsStatus: String = "Unknown",
     isRecording: Boolean = false,
@@ -108,9 +109,15 @@ fun MainScreen(
                                 item { MetricTile(label = "Heart Rate", value = heartRate) }
                                 if (isRadarConnected) {
                                     item {
+                                        val radarColor = when {
+                                            radarDistanceRaw in 0 until 80 -> Color.Red
+                                            radarDistanceRaw >= 80 -> Color(0xFFFFC107) // Yellow
+                                            else -> MaterialTheme.colorScheme.surfaceVariant
+                                        }
                                         MetricTile(
                                             label = "Vehicle Distance",
-                                            value = radarDistance
+                                            value = radarDistance,
+                                            containerColor = radarColor
                                         )
                                     }
                                 }
@@ -202,13 +209,15 @@ fun MainScreen(
 fun MetricTile(
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1.5f),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Column(
             modifier = Modifier

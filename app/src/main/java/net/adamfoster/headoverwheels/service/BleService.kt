@@ -58,7 +58,7 @@ class BleService : Service() {
         hrManager = HeartRateManager(RideRepository)
         radarManager = RadarManager(RideRepository) {
             // Callback for Radar Alert
-            toneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200)
+            toneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 375)
         }
     }
 

@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
                         hrSensorStatus = uiState.hrSensorStatus,
                         radarSensorStatus = uiState.radarSensorStatus,
                         radarDistance = uiState.radarDistance,
+                        radarDistanceRaw = uiState.radarDistanceRaw,
                         isRadarConnected = uiState.isRadarConnected,
                         gpsStatus = uiState.gpsStatus,
                         isRecording = uiState.isRecording,

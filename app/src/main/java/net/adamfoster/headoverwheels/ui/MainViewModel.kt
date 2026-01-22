@@ -68,6 +68,7 @@ class MainViewModel : ViewModel() {
             elapsedTime = formatElapsedTime(metrics.elapsedTime),
             heartRate = if (sensors.heartRate > 0) sensors.heartRate.toString() else "---",
             radarDistance = if (sensors.radarDistance >= 0) "${sensors.radarDistance} m" else "---",
+            radarDistanceRaw = sensors.radarDistance,
             gpsStatus = status.gpsStatus,
             hrSensorStatus = sensors.hrSensorStatus,
             radarSensorStatus = sensors.radarSensorStatus,

@@ -10,6 +10,7 @@ data class RideUiState(
     val elapsedTime: String = "00:00:00",
     val heartRate: String = "---",
     val radarDistance: String = "---",
+    val radarDistanceRaw: Int = -1,
     
     val gpsStatus: String = "Acquiring...",
     val hrSensorStatus: String = "disconnected",
