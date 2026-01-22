@@ -1,23 +1,71 @@
-# Built artifacts
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
 bin/
 gen/
 out/
 build/
 .gradle/
+.kotlin/
 
 # Android Studio / IntelliJ
-.idea/
+# Ignore everything in .idea by default
+.idea/**
+# But un-ignore standard project configuration files
+!.idea/
+!.idea/compiler.xml
+!.idea/copyright/
+!.idea/copyright/profiles_settings.xml
+!.idea/encodings.xml
+!.idea/gradley.xml
+!.idea/misc.xml
+!.idea/runConfigurations/
+!.idea/scopes/
+!.idea/vcs.xml
+!.idea/codeStyles/
+!.idea/navEditor.xml
+!.idea/modules.xml
+!.idea/inspectionProfiles/
+
+# Specific ignores within .idea
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+.idea/libraries
+.idea/shelf
+.idea/assetWizardSettings.xml
+.idea/caches
+
+# Legacy Android Studio files
 *.iml
 *.iws
 *.ipr
-/captures/
-/local.properties
-/.navigation/
+
+# Local configuration file (sdk.dir is here)
+local.properties
+
+# Android Studio Navigation Editor temp files
+.navigation/
+
+# Captures (Profilers)
+captures/
 
 # Keystore files
 *.jks
 *.keystore
 *.p12
+*.pem
 
 # External Native Build
 .externalNativeBuild/
@@ -28,6 +76,11 @@ google-services.json
 
 # OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # Log files
