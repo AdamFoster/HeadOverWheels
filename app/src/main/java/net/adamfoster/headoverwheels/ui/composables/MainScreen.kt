@@ -196,7 +196,7 @@ fun MainScreen(
                         StatusIcon(
                             icon = Icons.Filled.Info,
                             status = radarSensorStatus,
-                            activeCondition = { it == "Active" || it == "connected" }
+                            activeCondition = { it == "active" || it == "connected" }
                         )
                     }
                 }
