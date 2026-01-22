@@ -30,6 +30,8 @@ class BleService : Service() {
         const val CHANNEL_ID = "BleServiceChannel"
         const val NOTIFICATION_ID = 2
         const val ACTION_START_SCAN = "net.adamfoster.headoverwheels.action.START_SCAN"
+        const val ACTION_START_RIDE = "net.adamfoster.headoverwheels.action.START_RIDE"
+        const val ACTION_RESET_RIDE = "net.adamfoster.headoverwheels.action.RESET_RIDE"
     }
 
     private var bluetoothAdapter: BluetoothAdapter? = null
@@ -43,7 +45,7 @@ class BleService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification("Ready to connect sensors"))
+        // Notification starts on ride start
 
         val bluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
@@ -88,10 +90,15 @@ class BleService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_START_SCAN) {
-             startScanning()
-        } else {
-             startScanning()
+        when (intent?.action) {
+            ACTION_START_SCAN -> startScanning()
+            ACTION_START_RIDE -> {
+                startForeground(NOTIFICATION_ID, createNotification("Sensors Connected (Ride Active)"))
+            }
+            ACTION_RESET_RIDE -> {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            }
+            else -> startScanning()
         }
         return START_STICKY
     }

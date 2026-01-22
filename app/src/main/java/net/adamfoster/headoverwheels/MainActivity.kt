@@ -127,14 +127,27 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun toggleRide(isRecording: Boolean) {
-        val intent = Intent(this, LocationService::class.java)
-        intent.action = if (isRecording) LocationService.ACTION_PAUSE_RIDE else LocationService.ACTION_START_RIDE
-        startService(intent)
+        val action = if (isRecording) LocationService.ACTION_PAUSE_RIDE else LocationService.ACTION_START_RIDE
+        
+        val locIntent = Intent(this, LocationService::class.java)
+        locIntent.action = action
+        startService(locIntent)
+        
+        // Notify BleService of ride state for foreground management
+        if (action == LocationService.ACTION_START_RIDE) {
+            val bleIntent = Intent(this, BleService::class.java)
+            bleIntent.action = BleService.ACTION_START_RIDE
+            startService(bleIntent)
+        }
     }
 
     private fun resetRide() {
-        val intent = Intent(this, LocationService::class.java)
-        intent.action = LocationService.ACTION_RESET_RIDE
-        startService(intent)
+        val locIntent = Intent(this, LocationService::class.java)
+        locIntent.action = LocationService.ACTION_RESET_RIDE
+        startService(locIntent)
+
+        val bleIntent = Intent(this, BleService::class.java)
+        bleIntent.action = BleService.ACTION_RESET_RIDE
+        startService(bleIntent)
     }
 }

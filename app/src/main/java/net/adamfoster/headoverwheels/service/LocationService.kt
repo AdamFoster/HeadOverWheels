@@ -51,7 +51,7 @@ class LocationService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification("Ready to ride"))
+        // Notification will be started when ride starts
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         db = RideDatabase.getDatabase(this)
@@ -148,8 +148,8 @@ class LocationService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START_RIDE -> {
+                startForeground(NOTIFICATION_ID, createNotification("Recording Ride..."))
                 startRide()
-                updateNotification("Recording Ride...")
             }
             ACTION_PAUSE_RIDE -> {
                 pauseRide()
@@ -157,7 +157,7 @@ class LocationService : Service() {
             }
             ACTION_RESET_RIDE -> {
                 resetRide()
-                updateNotification("Ready to ride")
+                stopForeground(STOP_FOREGROUND_REMOVE)
             }
         }
         
