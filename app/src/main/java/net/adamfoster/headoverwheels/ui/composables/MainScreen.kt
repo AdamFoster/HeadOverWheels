@@ -104,12 +104,12 @@ fun MainScreen(
                                 item { MetricTile(label = "Elevation", value = altitude) }
                                 item { MetricTile(label = "Incline", value = incline) }
                                 item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
-                                item { MetricTile(label = "Distance", value = distance) }
+                                item { MetricTile(label = "Total Distance", value = distance) }
                                 item { MetricTile(label = "Heart Rate", value = heartRate) }
                                 if (isRadarConnected) {
                                     item {
                                         MetricTile(
-                                            label = "Vehicle Dist",
+                                            label = "Vehicle Distance",
                                             value = radarDistance
                                         )
                                     }

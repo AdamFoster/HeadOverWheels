@@ -9,7 +9,10 @@ import android.os.Build
 import net.adamfoster.headoverwheels.data.RideRepository
 import java.util.UUID
 
-class RadarManager(private val repository: RideRepository) : BleSensorManager {
+class RadarManager(
+    private val repository: RideRepository,
+    private val onAlert: () -> Unit = {}
+) : BleSensorManager {
 
     companion object {
         val RADAR_SERVICE_UUID: UUID = UUID.fromString("6A4E3200-667B-11E3-949A-0800200C9A66")
@@ -18,6 +21,7 @@ class RadarManager(private val repository: RideRepository) : BleSensorManager {
     }
 
     private var gatt: BluetoothGatt? = null
+    private var lastDistance = -1
 
     override fun getServiceUuid(): UUID = RADAR_SERVICE_UUID
 
@@ -61,6 +65,7 @@ class RadarManager(private val repository: RideRepository) : BleSensorManager {
             
             if (value.size <= 1) {
                 repository.updateRadarDistance(-1)
+                lastDistance = -1
                 return
             }
 
@@ -82,8 +87,15 @@ class RadarManager(private val repository: RideRepository) : BleSensorManager {
 
             if (hasThreats && closestDistance != Int.MAX_VALUE) {
                 repository.updateRadarDistance(closestDistance)
+                
+                // Trigger alert if we crossed the threshold
+                if (closestDistance < 80 && (lastDistance >= 80 || lastDistance == -1)) {
+                    onAlert()
+                }
+                lastDistance = closestDistance
             } else {
                 repository.updateRadarDistance(-1)
+                lastDistance = -1
             }
         }
     }

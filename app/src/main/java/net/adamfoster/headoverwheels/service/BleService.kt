@@ -15,6 +15,8 @@ import android.os.Build
 import android.os.IBinder
 import android.os.ParcelUuid
 import android.util.Log
+import android.media.AudioManager
+import android.media.ToneGenerator
 import androidx.core.app.NotificationCompat
 import net.adamfoster.headoverwheels.data.RideRepository
 import net.adamfoster.headoverwheels.service.ble.BleSensorManager
@@ -34,6 +36,7 @@ class BleService : Service() {
     
     private lateinit var hrManager: HeartRateManager
     private lateinit var radarManager: RadarManager
+    private var toneGenerator: ToneGenerator? = null
 
     private var isScanning = false
 
@@ -45,9 +48,18 @@ class BleService : Service() {
         val bluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
         
+        try {
+            toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+        } catch (e: Exception) {
+            Log.e("BleService", "Failed to create ToneGenerator", e)
+        }
+
         // Initialize managers with Repository
         hrManager = HeartRateManager(RideRepository)
-        radarManager = RadarManager(RideRepository)
+        radarManager = RadarManager(RideRepository) {
+            // Callback for Radar Alert
+            toneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200)
+        }
     }
 
     private fun createNotificationChannel() {
@@ -211,5 +223,7 @@ class BleService : Service() {
         hrManager.close()
         radarManager.close()
         bluetoothAdapter?.bluetoothLeScanner?.stopScan(scanCallback)
+        toneGenerator?.release()
+        toneGenerator = null
     }
 }
