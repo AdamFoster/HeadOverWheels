@@ -12,8 +12,8 @@ import java.util.UUID
 class RadarManager(private val repository: RideRepository) : BleSensorManager {
 
     companion object {
-        val RADAR_SERVICE_UUID: UUID = UUID.fromString("6AFF7000-56C8-4203-9068-185C32196F33")
-        val RADAR_DATA_CHAR_UUID: UUID = UUID.fromString("6AFF7101-56C8-4203-9068-185C32196F33")
+        val RADAR_SERVICE_UUID: UUID = UUID.fromString("6A4E3200-667B-11E3-949A-0800200C9A66")
+        val RADAR_DATA_CHAR_UUID: UUID = UUID.fromString("6A4E3203-667B-11E3-949A-0800200C9A66")
         private val CLIENT_CHARACTERISTIC_CONFIG_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
     }
 
@@ -54,9 +54,37 @@ class RadarManager(private val repository: RideRepository) : BleSensorManager {
     }
 
     override fun onCharacteristicChanged(uuid: UUID, value: ByteArray) {
-        if (uuid == RADAR_DATA_CHAR_UUID && value.isNotEmpty()) {
-            val distance = (value[1].toInt() and 0xFF)
-            repository.updateRadarDistance(distance)
+        if (uuid == RADAR_DATA_CHAR_UUID) {
+            // Data format: [Header (1 byte)] + [Threat 1 (3 bytes)] + [Threat 2 (3 bytes)] ...
+            // Threat: [ID?, Distance, Speed?]
+            // If length is 1, it means no threats are detected.
+            
+            if (value.size <= 1) {
+                repository.updateRadarDistance(-1)
+                return
+            }
+
+            var closestDistance = Int.MAX_VALUE
+            var hasThreats = false
+
+            // Iterate through threats. Each threat is 3 bytes long.
+            // Start at index 1 (skip header).
+            for (i in 1 until value.size step 3) {
+                // Distance is likely the second byte of the triplet (index i+1)
+                if (i + 1 < value.size) {
+                    val dist = (value[i + 1].toInt() and 0xFF)
+                    if (dist < closestDistance) {
+                        closestDistance = dist
+                    }
+                    hasThreats = true
+                }
+            }
+
+            if (hasThreats && closestDistance != Int.MAX_VALUE) {
+                repository.updateRadarDistance(closestDistance)
+            } else {
+                repository.updateRadarDistance(-1)
+            }
         }
     }
 
