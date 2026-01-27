@@ -152,7 +152,7 @@ fun SensorStatusCard(
                     Text(
                         text = status,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (status == "connected") Color.Green else Color.Gray
+                        color = if (status == "connected" || status == "active") Color.Green else Color.Gray
                     )
                 }
                 if (address != null) {

@@ -58,6 +58,7 @@ class HeartRateManager(private val repository: RideRepository) : BleSensorManage
             val characteristic = service.getCharacteristic(HEART_RATE_MEASUREMENT_CHAR_UUID)
             if (characteristic != null) {
                 enableNotification(gatt, characteristic)
+                repository.updateHrSensorStatus("active")
             }
         }
     }

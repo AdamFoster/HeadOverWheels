@@ -92,11 +92,11 @@ fun MainScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                item { MetricTile(label = "Total Distance", value = distance) }
+                                item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
                                 item { MetricTile(label = "Speed", value = speed) }
                                 item { MetricTile(label = "Elevation", value = altitude) }
                                 item { MetricTile(label = "Incline", value = incline) }
-                                item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
-                                item { MetricTile(label = "Total Distance", value = distance) }
                                 item { MetricTile(label = "Heart Rate", value = heartRate) }
                                 if (isRadarConnected) {
                                     item {
