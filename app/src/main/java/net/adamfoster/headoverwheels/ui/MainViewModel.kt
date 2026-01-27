@@ -66,7 +66,7 @@ class MainViewModel : ViewModel() {
             distance = String.format(Locale.getDefault(), "%.1f km", metrics.distance / 1000.0),
             incline = String.format(Locale.getDefault(), "%.1f %%", metrics.incline),
             elapsedTime = formatElapsedTime(metrics.elapsedTime),
-            heartRate = if (sensors.heartRate > 0) sensors.heartRate.toString() else "---",
+            heartRate = if (sensors.heartRate > 0) "${sensors.heartRate} bpm" else "---",
             radarDistance = if (sensors.radarDistance >= 0) "${sensors.radarDistance} m" else "---",
             radarDistanceRaw = sensors.radarDistance,
             gpsStatus = status.gpsStatus,

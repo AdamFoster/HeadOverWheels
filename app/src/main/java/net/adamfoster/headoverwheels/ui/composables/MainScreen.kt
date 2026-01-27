@@ -212,6 +212,7 @@ fun MetricTile(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant
 ) {
+    val (displayValue, displayUnit) = splitValueAndUnit(value)
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -237,14 +238,38 @@ fun MetricTile(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.displaySmall,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = displayValue,
+                        style = MaterialTheme.typography.displaySmall,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (displayUnit.isNotEmpty()) {
+                        Text(
+                            text = " $displayUnit",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 4.dp), // Slight offset to look better with large text baseline
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+private fun splitValueAndUnit(fullValue: String): Pair<String, String> {
+    val lastSpaceIndex = fullValue.lastIndexOf(' ')
+    return if (lastSpaceIndex != -1) {
+        val valuePart = fullValue.substring(0, lastSpaceIndex).trim()
+        val unitPart = fullValue.substring(lastSpaceIndex + 1).trim()
+        Pair(valuePart, unitPart)
+    } else {
+        Pair(fullValue, "")
     }
 }
 
