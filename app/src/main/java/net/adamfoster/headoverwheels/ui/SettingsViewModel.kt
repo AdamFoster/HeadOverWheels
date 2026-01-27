@@ -15,25 +15,38 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val repository = RideRepository
 
-    val uiState: StateFlow<SettingsUiState> = combine(
+    // Group scanner related state
+    private val scannerStateFlow = combine(
         repository.scannedDevices,
-        repository.hrSensorStatus,
-        repository.radarSensorStatus,
         repository.targetHrAddress,
         repository.targetRadarAddress
-    ) { scannedDevices, hrStatus, radarStatus, targetHr, targetRadar ->
+    ) { scannedDevices, targetHr, targetRadar ->
+        ScannerStateChunk(scannedDevices, targetHr, targetRadar)
+    }
+
+    val uiState: StateFlow<SettingsUiState> = combine(
+        scannerStateFlow,
+        repository.hrSensorStatus,
+        repository.radarSensorStatus,
+        repository.themeMode
+    ) { scannerState, hrStatus, radarStatus, themeMode ->
         SettingsUiState(
-            scannedDevices = scannedDevices,
+            scannedDevices = scannerState.scannedDevices,
             hrStatus = hrStatus,
             radarStatus = radarStatus,
-            targetHrAddress = targetHr,
-            targetRadarAddress = targetRadar
+            targetHrAddress = scannerState.targetHrAddress,
+            targetRadarAddress = scannerState.targetRadarAddress,
+            themeMode = themeMode
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = SettingsUiState()
     )
+
+    fun setThemeMode(mode: RideRepository.ThemeMode) {
+        repository.setThemeMode(mode)
+    }
 
     fun startScan() {
         val intent = Intent(getApplication(), BleService::class.java).apply {
@@ -65,5 +78,12 @@ data class SettingsUiState(
     val hrStatus: String = "disconnected",
     val radarStatus: String = "disconnected",
     val targetHrAddress: String? = null,
-    val targetRadarAddress: String? = null
+    val targetRadarAddress: String? = null,
+    val themeMode: RideRepository.ThemeMode = RideRepository.ThemeMode.SYSTEM
+)
+
+private data class ScannerStateChunk(
+    val scannedDevices: List<RideRepository.ScannedDevice>,
+    val targetHrAddress: String?,
+    val targetRadarAddress: String?
 )

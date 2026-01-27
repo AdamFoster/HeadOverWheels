@@ -50,13 +50,21 @@ class MainViewModel : ViewModel() {
         StatusChunk(gps, recording, radarConn)
     }
 
+    // Chunk 4: Chart Data
+    private val chartDataFlow = combine(
+        _speedData,
+        _elevationData
+    ) { speed, elevation ->
+        ChartDataChunk(speed, elevation)
+    }
+
     val uiState: StateFlow<RideUiState> = combine(
         metricsFlow,
         sensorsFlow,
         statusFlow,
-        _speedData,
-        _elevationData
-    ) { metrics, sensors, status, speedData, elevData ->
+        chartDataFlow,
+        repository.themeMode
+    ) { metrics, sensors, status, chartData, themeMode ->
         
         val speedKmh = metrics.speed * 3.6f
 
@@ -74,8 +82,9 @@ class MainViewModel : ViewModel() {
             radarSensorStatus = sensors.radarSensorStatus,
             isRecording = status.isRecording,
             isRadarConnected = status.isRadarConnected,
-            speedData = speedData,
-            elevationData = elevData
+            speedData = chartData.speedData,
+            elevationData = chartData.elevationData,
+            themeMode = themeMode
         )
     }.stateIn(
         scope = viewModelScope,
@@ -144,4 +153,9 @@ private data class StatusChunk(
     val gpsStatus: String,
     val isRecording: Boolean,
     val isRadarConnected: Boolean
+)
+
+private data class ChartDataChunk(
+    val speedData: List<Entry>,
+    val elevationData: List<Entry>
 )

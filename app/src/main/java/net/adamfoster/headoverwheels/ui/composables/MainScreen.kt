@@ -31,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,148 +68,147 @@ fun MainScreen(
     onResetRide: () -> Unit = {},
     onNavigateSettings: () -> Unit = {}
 ) {
-    HeadOverWheelsTheme {
-        Scaffold(
-        ) { innerPadding ->
-            Surface(
+    Scaffold { innerPadding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
-                color = MaterialTheme.colorScheme.background
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // 1. Grid Section (Weighted)
-                    Box(modifier = Modifier.weight(2f)) {
-                        Column {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                item { MetricTile(label = "Total Distance", value = distance) }
-                                item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
-                                item { MetricTile(label = "Speed", value = speed) }
-                                item { MetricTile(label = "Elevation", value = altitude) }
-                                item { MetricTile(label = "Incline", value = incline) }
-                                item { MetricTile(label = "Heart Rate", value = heartRate) }
-                                if (isRadarConnected) {
-                                    item {
-                                        val radarColor = when {
-                                            radarDistanceRaw in 0 until 80 -> Color.Red
-                                            radarDistanceRaw >= 80 -> Color(0xFFFFC107) // Yellow
-                                            else -> Color.Black
-                                        }
-                                        MetricTile(
-                                            label = "Vehicle Distance",
-                                            value = radarDistance,
-                                            containerColor = radarColor,
-                                            contentColor = if (radarColor == Color(0xFFFFC107)) Color.Black else Color.White
-                                        )
+                // 1. Grid Section (Weighted)
+                Box(modifier = Modifier.weight(2f)) {
+                    Column {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            item { MetricTile(label = "Total Distance", value = distance) }
+                            item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
+                            item { MetricTile(label = "Speed", value = speed) }
+                            item { MetricTile(label = "Elevation", value = altitude) }
+                            item { MetricTile(label = "Incline", value = incline) }
+                            item { MetricTile(label = "Heart Rate", value = heartRate) }
+                            if (isRadarConnected) {
+                                item {
+                                    val radarColor = when {
+                                        radarDistanceRaw in 0 until 80 -> Color.Red
+                                        radarDistanceRaw >= 80 -> Color(0xFFFFC107) // Yellow
+                                        else -> MaterialTheme.colorScheme.surface
                                     }
-                                }
-
-                            } // end grid
-                            RideChart(
-                                speedData = speedData,
-                                elevationData = elevationData,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 3. Control Section
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Central Start/Stop Button
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            val haptic = LocalHapticFeedback.current
-                            val buttonColor = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                            
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(CircleShape)
-                            ) {
-                                Surface(
-                                    color = buttonColor,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .combinedClickable(
-                                            onClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                onToggleRide()
-                                            },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                onResetRide()
-                                            }
-                                        )
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(
-                                            text = if (isRecording) "STOP" else "START",
-                                            color = Color.White,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                    val contentColor = when {
+                                        radarColor == Color.Red -> Color.White
+                                        radarColor == Color(0xFFFFC107) -> Color.Black
+                                        else -> MaterialTheme.colorScheme.onSurface
                                     }
+                                    MetricTile(
+                                        label = "Vehicle Distance",
+                                        value = radarDistance,
+                                        containerColor = radarColor,
+                                        contentColor = contentColor
+                                    )
                                 }
                             }
-                            Text(
-                                text = "Hold to Reset",
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
                         }
+                        
+                        RideChart(
+                            speedData = speedData,
+                            elevationData = elevationData,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
 
-                        // Settings button on the right
-                        IconButton(
-                            onClick = onNavigateSettings,
-                            modifier = Modifier.align(Alignment.CenterEnd)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 3. Control Section
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val haptic = LocalHapticFeedback.current
+                        val buttonColor = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                        
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
                         ) {
-                            Icon(
-                                Icons.Filled.Settings,
-                                contentDescription = "Settings",
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
+                            Surface(
+                                color = buttonColor,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .combinedClickable(
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onToggleRide()
+                                        },
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onResetRide()
+                                        }
+                                    )
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = if (isRecording) "STOP" else "START",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
                         }
+                        Text(
+                            text = "Hold to Reset",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 4. Status Icons (Fixed Size)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
+                    IconButton(
+                        onClick = onNavigateSettings,
+                        modifier = Modifier.align(Alignment.CenterEnd)
                     ) {
-                        StatusIcon(
-                            icon = Icons.Filled.LocationOn,
-                            status = gpsStatus,
-                            activeCondition = { it == "Fixed" },
-                            warningCondition = { it == "Acquiring..." }
-                        )
-                        StatusIcon(
-                            icon = Icons.Filled.Favorite,
-                            status = hrSensorStatus,
-                            activeCondition = { it == "connected" }
-                        )
-                        StatusIcon(
-                            icon = Icons.Filled.Info,
-                            status = radarSensorStatus,
-                            activeCondition = { it == "active" || it == "connected" }
+                        Icon(
+                            Icons.Filled.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StatusIcon(
+                        icon = Icons.Filled.LocationOn,
+                        status = gpsStatus,
+                        activeCondition = { it == "Fixed" },
+                        warningCondition = { it == "Acquiring..." }
+                    )
+                    StatusIcon(
+                        icon = Icons.Filled.Favorite,
+                        status = hrSensorStatus,
+                        activeCondition = { it == "connected" || it == "active" }
+                    )
+                    StatusIcon(
+                        icon = Icons.Filled.Info,
+                        status = radarSensorStatus,
+                        activeCondition = { it == "active" || it == "connected" }
+                    )
                 }
             }
         }
@@ -222,8 +220,8 @@ fun MetricTile(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    containerColor: Color = Color.Black,
-    contentColor: Color = Color.White
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     val (displayValue, displayUnit) = splitValueAndUnit(value)
     Card(
@@ -231,7 +229,7 @@ fun MetricTile(
             .fillMaxWidth()
             .aspectRatio(1.5f),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, Color.Gray),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
             contentColor = contentColor
@@ -269,7 +267,7 @@ fun MetricTile(
                         Text(
                             text = " $displayUnit",
                             style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 4.dp), // Slight offset to look better with large text baseline
+                            modifier = Modifier.padding(bottom = 4.dp),
                             textAlign = TextAlign.Center
                         )
                     }

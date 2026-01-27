@@ -49,10 +49,14 @@ class MainActivity : ComponentActivity() {
             val mainViewModel: MainViewModel = viewModel()
             val mainUiState by mainViewModel.uiState.collectAsState()
 
-            NavHost(navController = navController, startDestination = "main") {
-                composable("main") {
-                    MainScreen(
-                        speed = mainUiState.speed,
+            // Apply theme at the root level using the observed state
+            net.adamfoster.headoverwheels.ui.theme.HeadOverWheelsTheme(
+                themeMode = mainUiState.themeMode
+            ) {
+                NavHost(navController = navController, startDestination = "main") {
+                    composable("main") {
+                        MainScreen(
+                            speed = mainUiState.speed,
                         altitude = mainUiState.altitude,
                         distance = mainUiState.distance,
                         incline = mainUiState.incline,
@@ -84,13 +88,16 @@ class MainActivity : ComponentActivity() {
                         onStartScan = { settingsViewModel.startScan() },
                         onConnectDevice = { device -> settingsViewModel.connectDevice(device) },
                         onDisconnectDevice = { type -> settingsViewModel.disconnectDevice(type) },
+                        onSetThemeMode = { mode -> settingsViewModel.setThemeMode(mode) },
                         scannedDevices = settingsUiState.scannedDevices,
                         hrStatus = settingsUiState.hrStatus,
                         radarStatus = settingsUiState.radarStatus,
                         targetHrAddress = settingsUiState.targetHrAddress,
-                        targetRadarAddress = settingsUiState.targetRadarAddress
+                        targetRadarAddress = settingsUiState.targetRadarAddress,
+                        themeMode = settingsUiState.themeMode
                     )
                 }
+            }
             }
         }
     }

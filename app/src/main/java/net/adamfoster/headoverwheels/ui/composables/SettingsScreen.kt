@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import net.adamfoster.headoverwheels.data.RideRepository
-import net.adamfoster.headoverwheels.ui.theme.HeadOverWheelsTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,16 +39,17 @@ fun SettingsScreen(
     onStartScan: () -> Unit,
     onConnectDevice: (RideRepository.ScannedDevice) -> Unit,
     onDisconnectDevice: (String) -> Unit,
+    onSetThemeMode: (RideRepository.ThemeMode) -> Unit,
     scannedDevices: List<RideRepository.ScannedDevice>,
     hrStatus: String,
     radarStatus: String,
     targetHrAddress: String?,
-    targetRadarAddress: String?
+    targetRadarAddress: String?,
+    themeMode: RideRepository.ThemeMode
 ) {
-    HeadOverWheelsTheme {
-        Scaffold(
-            topBar = {
-                TopAppBar(
+    Scaffold(
+        topBar = {
+            TopAppBar(
                     title = { Text("Sensor Settings") },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
@@ -76,6 +76,35 @@ fun SettingsScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Text(
+                        text = "Appearance",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        ThemeOption(
+                            label = "System",
+                            selected = themeMode == RideRepository.ThemeMode.SYSTEM,
+                            onClick = { onSetThemeMode(RideRepository.ThemeMode.SYSTEM) }
+                        )
+                        ThemeOption(
+                            label = "Light",
+                            selected = themeMode == RideRepository.ThemeMode.LIGHT,
+                            onClick = { onSetThemeMode(RideRepository.ThemeMode.LIGHT) }
+                        )
+                        ThemeOption(
+                            label = "Dark",
+                            selected = themeMode == RideRepository.ThemeMode.DARK,
+                            onClick = { onSetThemeMode(RideRepository.ThemeMode.DARK) }
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     Text(
                         text = "Connected Sensors",
                         style = MaterialTheme.typography.titleLarge,
@@ -128,7 +157,23 @@ fun SettingsScreen(
                     }
                 }
             }
-        }
+    }
+}
+
+@Composable
+fun ThemeOption(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    ) {
+        Text(label)
     }
 }
 

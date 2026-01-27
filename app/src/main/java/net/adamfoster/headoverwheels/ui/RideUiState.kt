@@ -2,6 +2,8 @@ package net.adamfoster.headoverwheels.ui
 
 import com.github.mikephil.charting.data.Entry
 
+import net.adamfoster.headoverwheels.data.RideRepository
+
 data class RideUiState(
     val speed: String = "0.0 km/h",
     val altitude: String = "0 m",
@@ -21,5 +23,7 @@ data class RideUiState(
     
     // Chart Data
     val speedData: List<Entry> = emptyList(),
-    val elevationData: List<Entry> = emptyList()
+    val elevationData: List<Entry> = emptyList(),
+    
+    val themeMode: RideRepository.ThemeMode = RideRepository.ThemeMode.SYSTEM
 )

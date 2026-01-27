@@ -62,7 +62,16 @@ object RideRepository {
     private val _targetRadarAddress = MutableStateFlow<String?>(null)
     val targetRadarAddress: StateFlow<String?> = _targetRadarAddress.asStateFlow()
 
+    // App Settings
+    enum class ThemeMode { SYSTEM, LIGHT, DARK }
+    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
     // Update methods called by Services
+
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+    }
 
     fun addScannedDevice(device: ScannedDevice) {
         _scannedDevices.update { currentList ->
