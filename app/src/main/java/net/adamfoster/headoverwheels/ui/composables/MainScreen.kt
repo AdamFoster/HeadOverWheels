@@ -222,21 +222,28 @@ fun MetricTile(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(4.dp),
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center
             )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
-            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.displaySmall,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
