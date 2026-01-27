@@ -32,6 +32,10 @@ class BleService : Service() {
         const val ACTION_START_SCAN = "net.adamfoster.headoverwheels.action.START_SCAN"
         const val ACTION_START_RIDE = "net.adamfoster.headoverwheels.action.START_RIDE"
         const val ACTION_RESET_RIDE = "net.adamfoster.headoverwheels.action.RESET_RIDE"
+        const val ACTION_CONNECT_DEVICE = "net.adamfoster.headoverwheels.action.CONNECT_DEVICE"
+        const val ACTION_DISCONNECT_DEVICE = "net.adamfoster.headoverwheels.action.DISCONNECT_DEVICE"
+        const val EXTRA_DEVICE_ADDRESS = "device_address"
+        const val EXTRA_DEVICE_TYPE = "device_type" // "HR" or "RADAR"
     }
 
     private var bluetoothAdapter: BluetoothAdapter? = null
@@ -98,6 +102,19 @@ class BleService : Service() {
             ACTION_RESET_RIDE -> {
                 stopForeground(STOP_FOREGROUND_REMOVE)
             }
+            ACTION_CONNECT_DEVICE -> {
+                val address = intent.getStringExtra(EXTRA_DEVICE_ADDRESS)
+                val type = intent.getStringExtra(EXTRA_DEVICE_TYPE)
+                if (address != null && type != null) {
+                    connectToDevice(address, type)
+                }
+            }
+            ACTION_DISCONNECT_DEVICE -> {
+                val type = intent.getStringExtra(EXTRA_DEVICE_TYPE)
+                if (type != null) {
+                    disconnectDevice(type)
+                }
+            }
             else -> startScanning()
         }
         return START_STICKY
@@ -106,6 +123,9 @@ class BleService : Service() {
     private fun startScanning() {
         if (isScanning) return
         val scanner = bluetoothAdapter?.bluetoothLeScanner ?: return
+
+        // Clear previous scan results
+        RideRepository.clearScannedDevices()
 
         val filters = listOf(
             ScanFilter.Builder().setServiceUuid(ParcelUuid(HeartRateManager.HEART_RATE_SERVICE_UUID)).build(),
@@ -119,28 +139,76 @@ class BleService : Service() {
         updateNotification("Scanning for sensors...")
     }
 
+    private fun connectToDevice(address: String, type: String) {
+        val device = bluetoothAdapter?.getRemoteDevice(address)
+        if (device != null) {
+            Log.i("BleService", "Initiating connection to $type at $address")
+            // Stop scanning to improve connection reliability
+            if (isScanning) {
+                bluetoothAdapter?.bluetoothLeScanner?.stopScan(scanCallback)
+                isScanning = false
+            }
+
+            // Update target in repository so we remember it
+            if (type == "HR") RideRepository.setTargetHrDevice(address)
+            if (type == "RADAR") RideRepository.setTargetRadarDevice(address)
+
+            val gatt = device.connectGatt(this, false, gattCallback)
+            if (type == "HR") hrManager.setGatt(gatt)
+            if (type == "RADAR") radarManager.setGatt(gatt)
+        }
+    }
+
+    private fun disconnectDevice(type: String) {
+        if (type == "HR") {
+            RideRepository.setTargetHrDevice(null)
+            hrManager.getGatt()?.disconnect()
+            hrManager.close() // Also clears the gatt ref in manager
+        }
+        if (type == "RADAR") {
+            RideRepository.setTargetRadarDevice(null)
+            radarManager.getGatt()?.disconnect()
+            radarManager.close()
+        }
+    }
+
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             val device = result?.device ?: return
             val uuids = result.scanRecord?.serviceUuids ?: return
+            val rssi = result.rssi
 
-            // Check for Heart Rate
-            if (uuids.contains(ParcelUuid(HeartRateManager.HEART_RATE_SERVICE_UUID))) {
-                if (!hrManager.isConnected()) {
-                    Log.i("BleService", "Found HR Sensor: ${device.address}")
-                    val gatt = device.connectGatt(this@BleService, false, gattCallback)
-                    hrManager.setGatt(gatt)
-                    updateNotification("Connecting HR Sensor...")
-                }
-            }
+            // Identify and Add to Repository
+            var type = RideRepository.DeviceType.UNKNOWN
             
-            // Check for Radar
-            if (uuids.contains(ParcelUuid(RadarManager.RADAR_SERVICE_UUID))) {
-                 if (!radarManager.isConnected()) {
-                    Log.i("BleService", "Found Radar: ${device.address}")
-                    val gatt = device.connectGatt(this@BleService, false, gattCallback)
-                    radarManager.setGatt(gatt)
-                    updateNotification("Connecting Radar...")
+            if (uuids.contains(ParcelUuid(HeartRateManager.HEART_RATE_SERVICE_UUID))) {
+                type = RideRepository.DeviceType.HR
+            } else if (uuids.contains(ParcelUuid(RadarManager.RADAR_SERVICE_UUID))) {
+                type = RideRepository.DeviceType.RADAR
+            }
+
+            if (type != RideRepository.DeviceType.UNKNOWN) {
+                val scannedDevice = RideRepository.ScannedDevice(
+                    name = device.name ?: "Unknown Device",
+                    address = device.address,
+                    rssi = rssi,
+                    deviceType = type
+                )
+                RideRepository.addScannedDevice(scannedDevice)
+
+                // Auto-connect ONLY if it matches target
+                if (type == RideRepository.DeviceType.HR && device.address == RideRepository.targetHrAddress.value) {
+                    if (!hrManager.isConnected()) {
+                        Log.i("BleService", "Auto-connecting to Target HR: ${device.address}")
+                        connectToDevice(device.address, "HR")
+                    }
+                }
+                
+                if (type == RideRepository.DeviceType.RADAR && device.address == RideRepository.targetRadarAddress.value) {
+                     if (!radarManager.isConnected()) {
+                        Log.i("BleService", "Auto-connecting to Target Radar: ${device.address}")
+                        connectToDevice(device.address, "RADAR")
+                    }
                 }
             }
         }

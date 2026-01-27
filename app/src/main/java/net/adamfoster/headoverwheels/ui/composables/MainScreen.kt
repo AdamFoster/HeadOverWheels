@@ -1,5 +1,6 @@
 package net.adamfoster.headoverwheels.ui.composables
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -112,12 +113,13 @@ fun MainScreen(
                                         val radarColor = when {
                                             radarDistanceRaw in 0 until 80 -> Color.Red
                                             radarDistanceRaw >= 80 -> Color(0xFFFFC107) // Yellow
-                                            else -> MaterialTheme.colorScheme.surfaceVariant
+                                            else -> Color.Black
                                         }
                                         MetricTile(
                                             label = "Vehicle Distance",
                                             value = radarDistance,
-                                            containerColor = radarColor
+                                            containerColor = radarColor,
+                                            contentColor = if (radarColor == Color(0xFFFFC107)) Color.Black else Color.White
                                         )
                                     }
                                 }
@@ -210,7 +212,8 @@ fun MetricTile(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant
+    containerColor: Color = Color.Black,
+    contentColor: Color = Color.White
 ) {
     val (displayValue, displayUnit) = splitValueAndUnit(value)
     Card(
@@ -218,7 +221,11 @@ fun MetricTile(
             .fillMaxWidth()
             .aspectRatio(1.5f),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
+        border = BorderStroke(1.dp, Color.Gray),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        )
     ) {
         Column(
             modifier = Modifier

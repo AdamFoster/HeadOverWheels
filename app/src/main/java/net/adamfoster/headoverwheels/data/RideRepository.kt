@@ -47,8 +47,44 @@ object RideRepository {
 
     private val _isRadarConnected = MutableStateFlow(false)
     val isRadarConnected: StateFlow<Boolean> = _isRadarConnected.asStateFlow()
+    
+    // Scan & Connection Management
+    data class ScannedDevice(val name: String, val address: String, val rssi: Int, val deviceType: DeviceType)
+    enum class DeviceType { HR, RADAR, UNKNOWN }
+
+    private val _scannedDevices = MutableStateFlow<List<ScannedDevice>>(emptyList())
+    val scannedDevices: StateFlow<List<ScannedDevice>> = _scannedDevices.asStateFlow()
+    
+    private val _targetHrAddress = MutableStateFlow<String?>(null)
+    val targetHrAddress: StateFlow<String?> = _targetHrAddress.asStateFlow()
+    
+    private val _targetRadarAddress = MutableStateFlow<String?>(null)
+    val targetRadarAddress: StateFlow<String?> = _targetRadarAddress.asStateFlow()
 
     // Update methods called by Services
+
+    fun addScannedDevice(device: ScannedDevice) {
+        val currentList = _scannedDevices.value.toMutableList()
+        val existingIndex = currentList.indexOfFirst { it.address == device.address }
+        if (existingIndex != -1) {
+            currentList[existingIndex] = device
+        } else {
+            currentList.add(device)
+        }
+        _scannedDevices.value = currentList
+    }
+
+    fun clearScannedDevices() {
+        _scannedDevices.value = emptyList()
+    }
+    
+    fun setTargetHrDevice(address: String?) {
+        _targetHrAddress.value = address
+    }
+
+    fun setTargetRadarDevice(address: String?) {
+        _targetRadarAddress.value = address
+    }
 
     fun updateLocationMetrics(speed: Float, altitude: Double, incline: Double) {
         _speed.value = speed

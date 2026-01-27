@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import net.adamfoster.headoverwheels.service.LocationService
 import net.adamfoster.headoverwheels.service.BleService
 import net.adamfoster.headoverwheels.ui.MainViewModel
+import net.adamfoster.headoverwheels.ui.SettingsViewModel
 import net.adamfoster.headoverwheels.ui.composables.MainScreen
 import net.adamfoster.headoverwheels.ui.composables.SettingsScreen
 
@@ -45,38 +46,49 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val navController = rememberNavController()
-            val viewModel: MainViewModel = viewModel()
-            val uiState by viewModel.uiState.collectAsState()
+            val mainViewModel: MainViewModel = viewModel()
+            val mainUiState by mainViewModel.uiState.collectAsState()
 
             NavHost(navController = navController, startDestination = "main") {
                 composable("main") {
                     MainScreen(
-                        speed = uiState.speed,
-                        altitude = uiState.altitude,
-                        distance = uiState.distance,
-                        incline = uiState.incline,
-                        elapsedTime = uiState.elapsedTime,
-                        heartRate = uiState.heartRate,
-                        hrSensorStatus = uiState.hrSensorStatus,
-                        radarSensorStatus = uiState.radarSensorStatus,
-                        radarDistance = uiState.radarDistance,
-                        radarDistanceRaw = uiState.radarDistanceRaw,
-                        isRadarConnected = uiState.isRadarConnected,
-                        gpsStatus = uiState.gpsStatus,
-                        isRecording = uiState.isRecording,
-                        speedData = uiState.speedData,
-                        elevationData = uiState.elevationData,
-                        onToggleRide = { toggleRide(uiState.isRecording) },
+                        speed = mainUiState.speed,
+                        altitude = mainUiState.altitude,
+                        distance = mainUiState.distance,
+                        incline = mainUiState.incline,
+                        elapsedTime = mainUiState.elapsedTime,
+                        heartRate = mainUiState.heartRate,
+                        hrSensorStatus = mainUiState.hrSensorStatus,
+                        radarSensorStatus = mainUiState.radarSensorStatus,
+                        radarDistance = mainUiState.radarDistance,
+                        radarDistanceRaw = mainUiState.radarDistanceRaw,
+                        isRadarConnected = mainUiState.isRadarConnected,
+                        gpsStatus = mainUiState.gpsStatus,
+                        isRecording = mainUiState.isRecording,
+                        speedData = mainUiState.speedData,
+                        elevationData = mainUiState.elevationData,
+                        onToggleRide = { toggleRide(mainUiState.isRecording) },
                         onResetRide = { resetRide() },
                         onNavigateSettings = { navController.navigate("settings") }
                     )
                 }
                 composable("settings") {
+                    val settingsViewModel: SettingsViewModel = viewModel()
+                    val settingsUiState by settingsViewModel.uiState.collectAsState()
+                    
+                    // Trigger scan when entering settings if empty? 
+                    // Or let user press scan. The button is there.
+                    
                     SettingsScreen(
                         onNavigateBack = { navController.popBackStack() },
-                        onStartScan = { startScan() },
-                        hrStatus = uiState.hrSensorStatus,
-                        radarStatus = uiState.radarSensorStatus
+                        onStartScan = { settingsViewModel.startScan() },
+                        onConnectDevice = { device -> settingsViewModel.connectDevice(device) },
+                        onDisconnectDevice = { type -> settingsViewModel.disconnectDevice(type) },
+                        scannedDevices = settingsUiState.scannedDevices,
+                        hrStatus = settingsUiState.hrStatus,
+                        radarStatus = settingsUiState.radarStatus,
+                        targetHrAddress = settingsUiState.targetHrAddress,
+                        targetRadarAddress = settingsUiState.targetRadarAddress
                     )
                 }
             }
@@ -108,12 +120,6 @@ class MainActivity : ComponentActivity() {
             startLocationService()
             startBleService()
         }
-    }
-    
-    private fun startScan() {
-        val intent = Intent(this, BleService::class.java)
-        intent.action = BleService.ACTION_START_SCAN
-        startService(intent)
     }
 
     private fun startLocationService() {
