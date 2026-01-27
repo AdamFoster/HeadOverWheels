@@ -3,6 +3,7 @@ package net.adamfoster.headoverwheels.data
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * Singleton repository acting as the Single Source of Truth for the ride data.
@@ -64,14 +65,16 @@ object RideRepository {
     // Update methods called by Services
 
     fun addScannedDevice(device: ScannedDevice) {
-        val currentList = _scannedDevices.value.toMutableList()
-        val existingIndex = currentList.indexOfFirst { it.address == device.address }
-        if (existingIndex != -1) {
-            currentList[existingIndex] = device
-        } else {
-            currentList.add(device)
+        _scannedDevices.update { currentList ->
+            val mutableList = currentList.toMutableList()
+            val existingIndex = mutableList.indexOfFirst { it.address == device.address }
+            if (existingIndex != -1) {
+                mutableList[existingIndex] = device
+            } else {
+                mutableList.add(device)
+            }
+            mutableList
         }
-        _scannedDevices.value = currentList
     }
 
     fun clearScannedDevices() {

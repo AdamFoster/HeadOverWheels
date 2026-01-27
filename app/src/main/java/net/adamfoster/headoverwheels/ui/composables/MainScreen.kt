@@ -71,16 +71,6 @@ fun MainScreen(
 ) {
     HeadOverWheelsTheme {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Head Over Wheels") },
-                    actions = {
-                        IconButton(onClick = onNavigateSettings) {
-                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                        }
-                    }
-                )
-            }
         ) { innerPadding ->
             Surface(
                 modifier = Modifier
@@ -135,46 +125,66 @@ fun MainScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 3. Control Button (Fixed Size)
-                    val haptic = LocalHapticFeedback.current
-                    val buttonColor = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                    
+                    // 3. Control Section
                     Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Surface(
-                            color = buttonColor,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .combinedClickable(
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        onToggleRide()
-                                    },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        onResetRide()
+                        // Central Start/Stop Button
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            val haptic = LocalHapticFeedback.current
+                            val buttonColor = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                            
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(72.dp)
+                                    .clip(CircleShape)
+                            ) {
+                                Surface(
+                                    color = buttonColor,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .combinedClickable(
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                onToggleRide()
+                                            },
+                                            onLongClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                onResetRide()
+                                            }
+                                        )
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = if (isRecording) "STOP" else "START",
+                                            color = Color.White,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
-                                )
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = if (isRecording) "STOP" else "START",
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                }
                             }
+                            Text(
+                                text = "Hold to Reset",
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+
+                        // Settings button on the right
+                        IconButton(
+                            onClick = onNavigateSettings,
+                            modifier = Modifier.align(Alignment.CenterEnd)
+                        ) {
+                            Icon(
+                                Icons.Filled.Settings,
+                                contentDescription = "Settings",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
                         }
                     }
-                    Text(
-                        text = "Hold to Reset",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 

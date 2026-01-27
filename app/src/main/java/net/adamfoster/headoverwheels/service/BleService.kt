@@ -163,12 +163,12 @@ class BleService : Service() {
         if (type == "HR") {
             RideRepository.setTargetHrDevice(null)
             hrManager.getGatt()?.disconnect()
-            hrManager.close() // Also clears the gatt ref in manager
+            // Cleanup happens in callback
         }
         if (type == "RADAR") {
             RideRepository.setTargetRadarDevice(null)
             radarManager.getGatt()?.disconnect()
-            radarManager.close()
+            // Cleanup happens in callback
         }
     }
 
