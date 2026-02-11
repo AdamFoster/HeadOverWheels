@@ -18,6 +18,7 @@ class MainViewModel : ViewModel() {
 
     private val _speedData = MutableStateFlow<List<Entry>>(emptyList())
     private val _elevationData = MutableStateFlow<List<Entry>>(emptyList())
+    private val _startingElevation = MutableStateFlow<Float?>(null)
     private var dataPointIndex = 0f
 
     // Chunk 1: Primary Metrics
@@ -45,17 +46,20 @@ class MainViewModel : ViewModel() {
     private val statusFlow = combine(
         repository.gpsStatus,
         repository.isRecording,
-        repository.isRadarConnected
-    ) { gps, recording, radarConn ->
-        StatusChunk(gps, recording, radarConn)
+        repository.isRadarConnected,
+        repository.elevationGain,
+        repository.elevationLoss
+    ) { gps, recording, radarConn, elevGain, elevLoss ->
+        StatusChunk(gps, recording, radarConn, elevGain, elevLoss)
     }
 
     // Chunk 4: Chart Data
     private val chartDataFlow = combine(
         _speedData,
-        _elevationData
-    ) { speed, elevation ->
-        ChartDataChunk(speed, elevation)
+        _elevationData,
+        _startingElevation
+    ) { speed, elevation, startElev ->
+        ChartDataChunk(speed, elevation, startElev)
     }
 
     val uiState: StateFlow<RideUiState> = combine(
@@ -71,6 +75,8 @@ class MainViewModel : ViewModel() {
         RideUiState(
             speed = "${speedKmh.roundToInt()} km/h",
             altitude = "${metrics.altitude.roundToInt()} m",
+            elevationGain = "${status.elevationGain.roundToInt()}",
+            elevationLoss = "${status.elevationLoss.roundToInt()}",
             distance = String.format(Locale.getDefault(), "%.1f km", metrics.distance / 1000.0),
             incline = String.format(Locale.getDefault(), "%.1f %%", metrics.incline),
             elapsedTime = formatElapsedTime(metrics.elapsedTime),
@@ -84,6 +90,7 @@ class MainViewModel : ViewModel() {
             isRadarConnected = status.isRadarConnected,
             speedData = chartData.speedData,
             elevationData = chartData.elevationData,
+            startingElevation = chartData.startingElevation,
             themeMode = themeMode
         )
     }.stateIn(
@@ -98,6 +105,10 @@ class MainViewModel : ViewModel() {
                  val altitude = repository.altitude.value
                  val speedKmh = speed * 3.6f
                  
+                 if (_startingElevation.value == null && altitude != 0.0) {
+                     _startingElevation.value = altitude.toFloat()
+                 }
+
                  val currentSpeedList = _speedData.value.toMutableList()
                  val currentElevList = _elevationData.value.toMutableList()
             
@@ -120,6 +131,7 @@ class MainViewModel : ViewModel() {
                  if (distance == 0.0) {
                      _speedData.value = emptyList()
                      _elevationData.value = emptyList()
+                     _startingElevation.value = null
                      dataPointIndex = 0f
                  }
             }
@@ -152,10 +164,13 @@ private data class SensorChunk(
 private data class StatusChunk(
     val gpsStatus: String,
     val isRecording: Boolean,
-    val isRadarConnected: Boolean
+    val isRadarConnected: Boolean,
+    val elevationGain: Double,
+    val elevationLoss: Double
 )
 
 private data class ChartDataChunk(
     val speedData: List<Entry>,
-    val elevationData: List<Entry>
+    val elevationData: List<Entry>,
+    val startingElevation: Float?
 )

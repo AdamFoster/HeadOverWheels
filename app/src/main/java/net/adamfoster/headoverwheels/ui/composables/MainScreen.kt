@@ -2,6 +2,7 @@ package net.adamfoster.headoverwheels.ui.composables
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +44,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,6 +59,8 @@ import com.github.mikephil.charting.data.Entry
 fun MainScreen(
     speed: String,
     altitude: String,
+    elevationGain: String = "0",
+    elevationLoss: String = "0",
     distance: String,
     incline: String,
     elapsedTime: String,
@@ -64,6 +74,7 @@ fun MainScreen(
     isRecording: Boolean = false,
     speedData: List<Entry> = emptyList(),
     elevationData: List<Entry> = emptyList(),
+    startingElevation: Float? = null,
     onToggleRide: () -> Unit = {},
     onResetRide: () -> Unit = {},
     onNavigateSettings: () -> Unit = {}
@@ -92,7 +103,7 @@ fun MainScreen(
                             item { MetricTile(label = "Total Distance", value = distance) }
                             item { MetricTile(label = "Elapsed Time", value = elapsedTime) }
                             item { MetricTile(label = "Speed", value = speed) }
-                            item { MetricTile(label = "Elevation", value = altitude) }
+                            item { ElevationTile(altitude = altitude, elevationGain = elevationGain, elevationLoss = elevationLoss) }
                             item { MetricTile(label = "Incline", value = incline) }
                             item { MetricTile(label = "Heart Rate", value = heartRate) }
                             if (isRadarConnected) {
@@ -120,6 +131,7 @@ fun MainScreen(
                         RideChart(
                             speedData = speedData,
                             elevationData = elevationData,
+                            startingElevation = startingElevation,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -277,6 +289,85 @@ fun MetricTile(
     }
 }
 
+@Composable
+fun ElevationTile(
+    altitude: String,
+    elevationGain: String,
+    elevationLoss: String,
+    modifier: Modifier = Modifier
+) {
+    var showGainLoss by remember { mutableStateOf(false) }
+    val (displayValue, displayUnit) = splitValueAndUnit(altitude)
+    val defaultColor = MaterialTheme.colorScheme.onSurface
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1.5f)
+            .clickable { showGainLoss = !showGainLoss },
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = defaultColor
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            Text(
+                text = "Elevation",
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (showGainLoss) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(SpanStyle(color = Color.Red)) { append("+$elevationGain") }
+                            withStyle(SpanStyle(color = defaultColor)) { append(" / ") }
+                            withStyle(SpanStyle(color = Color.Green)) { append("-$elevationLoss") }
+                            withStyle(SpanStyle(color = defaultColor)) { append(" m") }
+                        },
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = displayValue,
+                            style = MaterialTheme.typography.displaySmall,
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (displayUnit.isNotEmpty()) {
+                            Text(
+                                text = " $displayUnit",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(bottom = 4.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun splitValueAndUnit(fullValue: String): Pair<String, String> {
     val lastSpaceIndex = fullValue.lastIndexOf(' ')
     return if (lastSpaceIndex != -1) {
@@ -316,6 +407,8 @@ fun DefaultPreview() {
         MainScreen(
             speed = "12.3 km/h",
             altitude = "123 m",
+            elevationGain = "123",
+            elevationLoss = "150",
             distance = "45.6 km",
             incline = "1.5 %",
             elapsedTime = "01:23:45",

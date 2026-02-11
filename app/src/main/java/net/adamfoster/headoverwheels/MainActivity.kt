@@ -58,6 +58,8 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             speed = mainUiState.speed,
                         altitude = mainUiState.altitude,
+                        elevationGain = mainUiState.elevationGain,
+                        elevationLoss = mainUiState.elevationLoss,
                         distance = mainUiState.distance,
                         incline = mainUiState.incline,
                         elapsedTime = mainUiState.elapsedTime,
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
                         isRecording = mainUiState.isRecording,
                         speedData = mainUiState.speedData,
                         elevationData = mainUiState.elevationData,
+                        startingElevation = mainUiState.startingElevation,
                         onToggleRide = { toggleRide(mainUiState.isRecording) },
                         onResetRide = { resetRide() },
                         onNavigateSettings = { navController.navigate("settings") }

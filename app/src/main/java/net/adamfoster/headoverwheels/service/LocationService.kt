@@ -40,6 +40,8 @@ class LocationService : Service() {
     // Ride State
     private var isRecording = false
     private var totalDistance = 0.0 // in meters
+    private var totalElevationGain = 0.0 // in meters
+    private var totalElevationLoss = 0.0 // in meters
     private var startTime = 0L
     private var elapsedTimeOffset = 0L // Time accumulated from previous segments
 
@@ -78,9 +80,15 @@ class LocationService : Service() {
                         }
                     }
 
-                    // Distance Calculation (only if recording)
+                    // Distance and Elevation Gain/Loss Calculation (only if recording)
                     if (isRecording && lastLocation != null) {
                         totalDistance += lastLocation!!.distanceTo(location)
+                        val elevDelta = location.altitude - lastLocation!!.altitude
+                        if (elevDelta > 0) {
+                            totalElevationGain += elevDelta
+                        } else {
+                            totalElevationLoss -= elevDelta
+                        }
                     }
 
                     // Incline Calculation
@@ -89,6 +97,7 @@ class LocationService : Service() {
                     // Update Repository
                     repository.updateLocationMetrics(currentSpeed, location.altitude, currentIncline)
                     repository.updateDistance(totalDistance)
+                    repository.updateElevationGainLoss(totalElevationGain, totalElevationLoss)
 
                     // DB Insertion (only if recording)
                     if (isRecording) {
@@ -186,6 +195,8 @@ class LocationService : Service() {
         startTime = 0L
         elapsedTimeOffset = 0L
         totalDistance = 0.0
+        totalElevationGain = 0.0
+        totalElevationLoss = 0.0
         inclineCalculator.reset()
         repository.resetRide()
     }

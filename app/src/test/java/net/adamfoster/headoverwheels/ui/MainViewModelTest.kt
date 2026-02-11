@@ -62,7 +62,7 @@ class MainViewModelTest {
         assertEquals("150 m", state.altitude)
         assertEquals("1.5 km", state.distance)
         assertEquals("2.5 %", state.incline)
-        assertEquals("140", state.heartRate)
+        assertEquals("140 bpm", state.heartRate)
         
         job.cancel()
     }

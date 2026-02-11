@@ -10,6 +10,7 @@ import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
@@ -19,6 +20,7 @@ import java.util.Locale
 fun RideChart(
     speedData: List<Entry>,
     elevationData: List<Entry>,
+    startingElevation: Float? = null,
     modifier: Modifier = Modifier
 ) {
     val speedColor = AndroidColor.GREEN
@@ -58,6 +60,7 @@ fun RideChart(
                     textColor = speedColor
                     setDrawGridLines(true)
                     valueFormatter = decimalFormatter
+                    axisMinimum = 0f
                 }
                 
                 axisRight.apply {
@@ -93,7 +96,19 @@ fun RideChart(
 
             val lineData = LineData(speedDataSet, elevationDataSet)
             chart.data = lineData
-            
+
+            chart.axisRight.removeAllLimitLines()
+            if (startingElevation != null) {
+                val limitLine = LimitLine(startingElevation, "Start").apply {
+                    lineColor = elevationColor
+                    lineWidth = 1f
+                    enableDashedLine(10f, 10f, 0f)
+                    textColor = elevationColor
+                    textSize = 10f
+                }
+                chart.axisRight.addLimitLine(limitLine)
+            }
+
             chart.setVisibleXRangeMaximum(100f)
             chart.moveViewToX(speedData.lastOrNull()?.x ?: 0f)
             

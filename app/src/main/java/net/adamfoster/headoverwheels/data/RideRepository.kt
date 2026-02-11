@@ -24,6 +24,12 @@ object RideRepository {
     private val _distance = MutableStateFlow(0.0) // meters
     val distance: StateFlow<Double> = _distance.asStateFlow()
 
+    private val _elevationGain = MutableStateFlow(0.0) // meters
+    val elevationGain: StateFlow<Double> = _elevationGain.asStateFlow()
+
+    private val _elevationLoss = MutableStateFlow(0.0) // meters
+    val elevationLoss: StateFlow<Double> = _elevationLoss.asStateFlow()
+
     private val _elapsedTime = MutableStateFlow(0L) // milliseconds
     val elapsedTime: StateFlow<Long> = _elapsedTime.asStateFlow()
 
@@ -108,6 +114,11 @@ object RideRepository {
         _distance.value = totalDistance
     }
 
+    fun updateElevationGainLoss(gain: Double, loss: Double) {
+        _elevationGain.value = gain
+        _elevationLoss.value = loss
+    }
+
     fun updateElapsedTime(timeMs: Long) {
         _elapsedTime.value = timeMs
     }
@@ -142,6 +153,8 @@ object RideRepository {
         _altitude.value = 0.0
         _incline.value = 0.0
         _distance.value = 0.0
+        _elevationGain.value = 0.0
+        _elevationLoss.value = 0.0
         _elapsedTime.value = 0L
         _radarDistance.value = -1
         _isRecording.value = false

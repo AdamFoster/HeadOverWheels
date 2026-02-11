@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(./gradlew test:*)"
+    ]
+  }
+}
