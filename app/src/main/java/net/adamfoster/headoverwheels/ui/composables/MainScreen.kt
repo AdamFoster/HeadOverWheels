@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -312,54 +313,75 @@ fun ElevationTile(
             contentColor = defaultColor
         )
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+                .padding(8.dp)
         ) {
-            Text(
-                text = "Elevation",
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center
-            )
-            Box(
+            Icon(
+                imageVector = Icons.Filled.Refresh,
+                contentDescription = "Tap to toggle",
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                    .size(14.dp)
+                    .align(Alignment.TopEnd)
+            )
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
             ) {
-                if (showGainLoss) {
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(SpanStyle(color = Color.Red)) { append("+$elevationGain") }
-                            withStyle(SpanStyle(color = defaultColor)) { append(" / ") }
-                            withStyle(SpanStyle(color = Color.Green)) { append("-$elevationLoss") }
-                            withStyle(SpanStyle(color = defaultColor)) { append(" m") }
-                        },
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                } else {
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = displayValue,
-                            style = MaterialTheme.typography.displaySmall,
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold
-                        )
-                        if (displayUnit.isNotEmpty()) {
+                Text(
+                    text = "Elevation",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (showGainLoss) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = " $displayUnit",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(bottom = 4.dp),
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(color = Color.Red)) { append("+$elevationGain") }
+                                    withStyle(SpanStyle(color = defaultColor)) { append(" m") }
+                                },
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
                             )
+                            Text(
+                                text = buildAnnotatedString {
+                                    withStyle(SpanStyle(color = Color.Green)) { append("-$elevationLoss") }
+                                    withStyle(SpanStyle(color = defaultColor)) { append(" m") }
+                                },
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = displayValue,
+                                style = MaterialTheme.typography.displaySmall,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (displayUnit.isNotEmpty()) {
+                                Text(
+                                    text = " $displayUnit",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(bottom = 4.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
                 }

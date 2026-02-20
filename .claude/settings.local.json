@@ -3,7 +3,10 @@
     "allow": [
       "Bash(ls:*)",
       "Bash(./gradlew assembleDebug:*)",
-      "Bash(./gradlew test:*)"
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew :app:testDebugUnitTest:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
