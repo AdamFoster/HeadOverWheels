@@ -39,4 +39,26 @@ class HeartRateManagerTest {
         verify { repository.updateHeartRate(0) }
         verify { repository.updateHrSensorStatus("disconnected") }
     }
+
+    @Test
+    fun `onCharacteristicChanged ignores truncated UINT8 packet`() {
+        val uuid = HeartRateManager.HEART_RATE_MEASUREMENT_CHAR_UUID
+        // Only the flag byte present — no HR byte
+        val value = byteArrayOf(0x00)
+
+        manager.onCharacteristicChanged(uuid, value)
+
+        verify(exactly = 0) { repository.updateHeartRate(any()) }
+    }
+
+    @Test
+    fun `onCharacteristicChanged ignores truncated UINT16 packet`() {
+        val uuid = HeartRateManager.HEART_RATE_MEASUREMENT_CHAR_UUID
+        // Flag says UINT16 but only 2 bytes present — missing the MSB
+        val value = byteArrayOf(0x01, 0x2C)
+
+        manager.onCharacteristicChanged(uuid, value)
+
+        verify(exactly = 0) { repository.updateHeartRate(any()) }
+    }
 }

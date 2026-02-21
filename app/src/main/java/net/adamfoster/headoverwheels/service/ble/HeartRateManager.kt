@@ -64,18 +64,19 @@ class HeartRateManager(private val repository: RideRepository) : BleSensorManage
     }
 
     override fun onCharacteristicChanged(uuid: UUID, value: ByteArray) {
-        if (uuid == HEART_RATE_MEASUREMENT_CHAR_UUID && value.isNotEmpty()) {
-            val flags = value[0].toInt()
-            val isHeartRateInUInt16 = (flags and 1) != 0
-            val heartRate = if (isHeartRateInUInt16) {
-                // UInt16: 2nd and 3rd bytes (Little Endian)
-                ((value[2].toInt() and 0xFF) shl 8) or (value[1].toInt() and 0xFF)
-            } else {
-                // UInt8: 2nd byte
-                value[1].toInt() and 0xFF
-            }
-            repository.updateHeartRate(heartRate)
+        if (uuid != HEART_RATE_MEASUREMENT_CHAR_UUID || value.isEmpty()) return
+        val flags = value[0].toInt()
+        val isHeartRateInUInt16 = (flags and 1) != 0
+        if (isHeartRateInUInt16 && value.size < 3) return
+        if (!isHeartRateInUInt16 && value.size < 2) return
+        val heartRate = if (isHeartRateInUInt16) {
+            // UInt16: 2nd and 3rd bytes (Little Endian)
+            ((value[2].toInt() and 0xFF) shl 8) or (value[1].toInt() and 0xFF)
+        } else {
+            // UInt8: 2nd byte
+            value[1].toInt() and 0xFF
         }
+        repository.updateHeartRate(heartRate)
     }
 
     override fun close() {
