@@ -36,6 +36,7 @@ class LocationService : Service() {
     private lateinit var locationCallback: LocationCallback
     private var lastLocation: android.location.Location? = null
     private val inclineCalculator = InclineCalculator()
+    private val elevationCalculator = ElevationCalculator()
 
     // Ride State
     private var isRecording = false
@@ -83,12 +84,9 @@ class LocationService : Service() {
                     // Distance and Elevation Gain/Loss Calculation (only if recording)
                     if (isRecording && lastLocation != null) {
                         totalDistance += lastLocation!!.distanceTo(location)
-                        val elevDelta = location.altitude - lastLocation!!.altitude
-                        if (elevDelta > 0) {
-                            totalElevationGain += elevDelta
-                        } else {
-                            totalElevationLoss -= elevDelta
-                        }
+                        val elevDelta = elevationCalculator.update(location.altitude)
+                        totalElevationGain += elevDelta.gain
+                        totalElevationLoss += elevDelta.loss
                     }
 
                     // Incline Calculation
@@ -187,6 +185,7 @@ class LocationService : Service() {
             isRecording = false
             elapsedTimeOffset += System.currentTimeMillis() - startTime
             repository.updateRecordingStatus(false)
+            elevationCalculator.reset()
         }
     }
 
@@ -198,6 +197,7 @@ class LocationService : Service() {
         totalElevationGain = 0.0
         totalElevationLoss = 0.0
         inclineCalculator.reset()
+        elevationCalculator.reset()
         repository.resetRide()
     }
     
