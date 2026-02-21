@@ -75,14 +75,12 @@ class RadarManager(
             // Iterate through threats. Each threat is 3 bytes long.
             // Start at index 1 (skip header).
             for (i in 1 until value.size step 3) {
-                // Distance is likely the second byte of the triplet (index i+1)
-                if (i + 1 < value.size) {
-                    val dist = (value[i + 1].toInt() and 0xFF)
-                    if (dist < closestDistance) {
-                        closestDistance = dist
-                    }
-                    hasThreats = true
+                if (i + 2 >= value.size) break  // skip incomplete triplet at end of packet
+                val dist = (value[i + 1].toInt() and 0xFF)
+                if (dist < closestDistance) {
+                    closestDistance = dist
                 }
+                hasThreats = true
             }
 
             if (hasThreats && closestDistance != Int.MAX_VALUE) {
