@@ -74,6 +74,7 @@ class MainActivity : ComponentActivity() {
                         speedData = mainUiState.speedData,
                         elevationData = mainUiState.elevationData,
                         startingElevation = mainUiState.startingElevation,
+                        themeMode = mainUiState.themeMode,
                         onToggleRide = { toggleRide(mainUiState.isRecording) },
                         onResetRide = { resetRide() },
                         onNavigateSettings = { navController.navigate("settings") }

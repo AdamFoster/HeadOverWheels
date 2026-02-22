@@ -2,7 +2,6 @@ package net.adamfoster.headoverwheels.ui.composables
 
 import android.graphics.Color as AndroidColor
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
@@ -25,8 +24,7 @@ fun RideChart(
     modifier: Modifier = Modifier
 ) {
     val speedColor = AndroidColor.GREEN
-    val elevationColor = if (isDarkTheme) AndroidColor.LTGRAY else AndroidColor.DKGRAY
-    val textColor = if (isDarkTheme) AndroidColor.LTGRAY else AndroidColor.DKGRAY
+    val chartForegroundColor = if (isDarkTheme) AndroidColor.LTGRAY else AndroidColor.DKGRAY
 
     val decimalFormatter = object : ValueFormatter() {
         override fun getFormattedValue(value: Float): String {
@@ -35,7 +33,7 @@ fun RideChart(
     }
 
     AndroidView(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         factory = { context ->
             LineChart(context).apply {
                 layoutParams = ViewGroup.LayoutParams(
@@ -49,12 +47,12 @@ fun RideChart(
                 setPinchZoom(false)
                 setDrawGridBackground(false)
                 legend.isEnabled = true
-                legend.textColor = textColor
+                legend.textColor = chartForegroundColor
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     setDrawGridLines(false)
-                    this.textColor = textColor
+                    this.textColor = chartForegroundColor
                     setDrawLabels(false)
                 }
 
@@ -66,7 +64,7 @@ fun RideChart(
                 }
 
                 axisRight.apply {
-                    this.textColor = elevationColor
+                    this.textColor = chartForegroundColor
                     setDrawGridLines(false)
                     valueFormatter = decimalFormatter
                 }
@@ -74,9 +72,10 @@ fun RideChart(
         },
         update = { chart ->
             // Update colours on recomposition (e.g. theme switch)
-            chart.legend.textColor = textColor
-            chart.xAxis.textColor = textColor
-            chart.axisRight.textColor = elevationColor
+            chart.legend.textColor = chartForegroundColor
+            chart.xAxis.textColor = chartForegroundColor
+            chart.axisLeft.textColor = speedColor
+            chart.axisRight.textColor = chartForegroundColor
 
             if (speedData.isEmpty() && elevationData.isEmpty()) {
                 chart.clear()
@@ -94,7 +93,7 @@ fun RideChart(
 
             val elevationDataSet = LineDataSet(elevationData, "Elev (m)").apply {
                 axisDependency = YAxis.AxisDependency.RIGHT
-                color = elevationColor
+                color = chartForegroundColor
                 setDrawCircles(false)
                 lineWidth = 2f
                 setDrawValues(false)
@@ -107,10 +106,10 @@ fun RideChart(
             chart.axisRight.removeAllLimitLines()
             if (startingElevation != null) {
                 val limitLine = LimitLine(startingElevation, "Start").apply {
-                    lineColor = elevationColor
+                    lineColor = chartForegroundColor
                     lineWidth = 1f
                     enableDashedLine(10f, 10f, 0f)
-                    this.textColor = elevationColor
+                    this.textColor = chartForegroundColor
                     textSize = 10f
                 }
                 chart.axisRight.addLimitLine(limitLine)

@@ -53,6 +53,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import net.adamfoster.headoverwheels.data.RideRepository
 import net.adamfoster.headoverwheels.ui.theme.HeadOverWheelsTheme
 import com.github.mikephil.charting.data.Entry
 
@@ -77,10 +78,16 @@ fun MainScreen(
     speedData: List<Entry> = emptyList(),
     elevationData: List<Entry> = emptyList(),
     startingElevation: Float? = null,
+    themeMode: RideRepository.ThemeMode = RideRepository.ThemeMode.SYSTEM,
     onToggleRide: () -> Unit = {},
     onResetRide: () -> Unit = {},
     onNavigateSettings: () -> Unit = {}
 ) {
+    val isDarkTheme = when (themeMode) {
+        RideRepository.ThemeMode.DARK -> true
+        RideRepository.ThemeMode.LIGHT -> false
+        RideRepository.ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
     Scaffold { innerPadding ->
         Surface(
             modifier = Modifier
@@ -134,7 +141,7 @@ fun MainScreen(
                             speedData = speedData,
                             elevationData = elevationData,
                             startingElevation = startingElevation,
-                            isDarkTheme = isSystemInDarkTheme(),
+                            isDarkTheme = isDarkTheme,
                             modifier = Modifier.fillMaxWidth().height(180.dp)
                         )
                     }
