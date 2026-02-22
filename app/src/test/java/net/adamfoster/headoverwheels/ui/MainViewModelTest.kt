@@ -3,6 +3,7 @@ package net.adamfoster.headoverwheels.ui
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.adamfoster.headoverwheels.MainDispatcherRule
 import net.adamfoster.headoverwheels.data.RideRepository
@@ -48,10 +49,9 @@ class MainViewModelTest {
         RideRepository.updateLocationMetrics(10f, 150.0, 2.5) // 10 m/s = 36 km/h
         RideRepository.updateDistance(1500.0)
         RideRepository.updateHeartRate(140)
-        
-        // Yield to allow flow to process
-        // In UnconfinedTestDispatcher this usually happens immediately, but let's be safe
-        
+
+        advanceUntilIdle()
+
         val state = viewModel.uiState.value
         
         // Note: 10 m/s * 3.6 = 36 km/h
