@@ -41,6 +41,7 @@ class RideRepositoryTest {
         RideRepository.updateElevationGainLoss(50.0, 20.0)
         RideRepository.updateElapsedTime(60000L)
         RideRepository.updateRecordingStatus(true)
+        RideRepository.updateHeartRate(140)
 
         RideRepository.resetRide()
 
@@ -52,6 +53,7 @@ class RideRepositoryTest {
         assertEquals(0.0, RideRepository.elevationLoss.first(), 0.01)
         assertEquals(0L, RideRepository.elapsedTime.first())
         assertEquals(false, RideRepository.isRecording.first())
+        assertEquals(0, RideRepository.heartRate.first())
     }
 
     @Test

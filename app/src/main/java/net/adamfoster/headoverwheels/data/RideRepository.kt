@@ -156,6 +156,7 @@ object RideRepository {
         _elevationGain.value = 0.0
         _elevationLoss.value = 0.0
         _elapsedTime.value = 0L
+        _heartRate.value = 0
         _radarDistance.value = -1
         _isRecording.value = false
         // Don't reset sensor connection statuses
