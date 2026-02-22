@@ -19,7 +19,6 @@ import android.media.AudioManager
 import android.media.ToneGenerator
 import androidx.core.app.NotificationCompat
 import net.adamfoster.headoverwheels.data.RideRepository
-import net.adamfoster.headoverwheels.service.ble.BleSensorManager
 import net.adamfoster.headoverwheels.service.ble.HeartRateManager
 import net.adamfoster.headoverwheels.service.ble.RadarManager
 
@@ -140,22 +139,18 @@ class BleService : Service() {
     }
 
     private fun connectToDevice(address: String, type: String) {
-        val device = bluetoothAdapter?.getRemoteDevice(address)
-        if (device != null) {
-            Log.i("BleService", "Initiating connection to $type at $address")
-            // Stop scanning to improve connection reliability
-            if (isScanning) {
-                bluetoothAdapter?.bluetoothLeScanner?.stopScan(scanCallback)
-                isScanning = false
-            }
-
-            // Update target in repository so we remember it
-            if (type == "HR") RideRepository.setTargetHrDevice(address)
-            if (type == "RADAR") RideRepository.setTargetRadarDevice(address)
-
-            val gatt = device.connectGatt(this, false, gattCallback)
-            if (type == "HR") hrManager.setGatt(gatt)
-            if (type == "RADAR") radarManager.setGatt(gatt)
+        val device = bluetoothAdapter?.getRemoteDevice(address) ?: return
+        Log.i("BleService", "Initiating connection to $type at $address")
+        if (isScanning) {
+            bluetoothAdapter?.bluetoothLeScanner?.stopScan(scanCallback)
+            isScanning = false
+        }
+        if (type == "HR") {
+            RideRepository.setTargetHrDevice(address)
+            hrManager.setGatt(device.connectGatt(this, false, hrGattCallback))
+        } else if (type == "RADAR") {
+            RideRepository.setTargetRadarDevice(address)
+            radarManager.setGatt(device.connectGatt(this, false, radarGattCallback))
         }
     }
 
@@ -214,63 +209,25 @@ class BleService : Service() {
         }
     }
 
-    private val gattCallback = object : BluetoothGattCallback() {
+    private val hrGattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.i("BleService", "Connected to GATT server: ${gatt.device.address}")
+                Log.i("BleService", "HR connected: ${gatt.device.address}")
                 gatt.discoverServices()
-                
-                // We need to know which manager this gatt belongs to.
-                // Since we have separate managers but share a callback in this implementation, 
-                // we can check the service list later or match device address if we stored it.
-                // However, the managers store their gatt reference.
-                
-                // Simple check:
-                // This logic assumes 1 device per type.
-                
-                // We'll dispatch to both, they can check if it's their gatt (by reference equality) 
-                // BUT we passed 'gatt' to 'setGatt' before connection completed in scanCallback.
-                // So the equality check works.
-                
-                if (hrManager.isConnected() && isGattForManager(gatt, hrManager)) {
-                     hrManager.onConnected(gatt)
-                     updateNotification("HR Connected")
-                }
-                if (radarManager.isConnected() && isGattForManager(gatt, radarManager)) {
-                     radarManager.onConnected(gatt)
-                     updateNotification("Radar Connected")
-                }
-                
+                hrManager.onConnected(gatt)
+                updateNotification("HR Connected")
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.i("BleService", "Disconnected from GATT server.")
-                
-                 if (hrManager.isConnected() && isGattForManager(gatt, hrManager)) {
-                     hrManager.onDisconnected()
-                     updateNotification("HR Disconnected")
-                }
-                if (radarManager.isConnected() && isGattForManager(gatt, radarManager)) {
-                     radarManager.onDisconnected()
-                     updateNotification("Radar Disconnected")
-                }
-                
+                Log.i("BleService", "HR disconnected.")
+                hrManager.onDisconnected()
                 gatt.close()
-                startScanning()
+                updateNotification("HR Disconnected")
+                // Only auto-scan if this was not a user-initiated disconnect
+                if (RideRepository.targetHrAddress.value != null) startScanning()
             }
-        }
-        
-        // Reflection or additional field would be cleaner, but for now:
-        // We can't easily check "isGattForManager" without exposing the internal gatt from manager.
-        // Let's rely on the fact that we only have two.
-        
-        private fun isGattForManager(gatt: BluetoothGatt, manager: BleSensorManager): Boolean {
-             return manager.getGatt() == gatt
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                hrManager.onServicesDiscovered(gatt)
-                radarManager.onServicesDiscovered(gatt)
-            }
+            if (status == BluetoothGatt.GATT_SUCCESS) hrManager.onServicesDiscovered(gatt)
         }
 
         override fun onCharacteristicChanged(
@@ -278,16 +235,38 @@ class BleService : Service() {
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray
         ) {
-             hrManager.onCharacteristicChanged(characteristic.uuid, value)
-             radarManager.onCharacteristicChanged(characteristic.uuid, value)
+            hrManager.onCharacteristicChanged(characteristic.uuid, value)
         }
     }
-    
-    // Quick fix helper for the "isGattForManager" issue:
-    // We don't strictly need to filter in onConnected because discoverServices will sort it out,
-    // and onDisconnected will clean up.
-    // However, knowing which one connected allows for better notifications.
-    // I'll leave the notification logic generic or check ServicesDiscovered for precise notifications.
+
+    private val radarGattCallback = object : BluetoothGattCallback() {
+        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                Log.i("BleService", "Radar connected: ${gatt.device.address}")
+                gatt.discoverServices()
+                radarManager.onConnected(gatt)
+                updateNotification("Radar Connected")
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.i("BleService", "Radar disconnected.")
+                radarManager.onDisconnected()
+                gatt.close()
+                updateNotification("Radar Disconnected")
+                if (RideRepository.targetRadarAddress.value != null) startScanning()
+            }
+        }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) radarManager.onServicesDiscovered(gatt)
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray
+        ) {
+            radarManager.onCharacteristicChanged(characteristic.uuid, value)
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
