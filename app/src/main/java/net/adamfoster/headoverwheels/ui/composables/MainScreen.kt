@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -133,7 +134,8 @@ fun MainScreen(
                             speedData = speedData,
                             elevationData = elevationData,
                             startingElevation = startingElevation,
-                            modifier = Modifier.fillMaxSize()
+                            isDarkTheme = isSystemInDarkTheme(),
+                            modifier = Modifier.fillMaxWidth().height(180.dp)
                         )
                     }
                 }
@@ -346,7 +348,7 @@ fun ElevationTile(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = buildAnnotatedString {
-                                    withStyle(SpanStyle(color = Color.Red)) { append("+$elevationGain") }
+                                    withStyle(SpanStyle(color = Color.Green)) { append("+$elevationGain") }
                                     withStyle(SpanStyle(color = defaultColor)) { append(" m") }
                                 },
                                 style = MaterialTheme.typography.displaySmall,
@@ -355,7 +357,7 @@ fun ElevationTile(
                             )
                             Text(
                                 text = buildAnnotatedString {
-                                    withStyle(SpanStyle(color = Color.Green)) { append("-$elevationLoss") }
+                                    withStyle(SpanStyle(color = Color.Red)) { append("-$elevationLoss") }
                                     withStyle(SpanStyle(color = defaultColor)) { append(" m") }
                                 },
                                 style = MaterialTheme.typography.displaySmall,

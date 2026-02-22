@@ -5,7 +5,7 @@ import com.github.mikephil.charting.data.Entry
 import net.adamfoster.headoverwheels.data.RideRepository
 
 data class RideUiState(
-    val speed: String = "0.0 km/h",
+    val speed: String = "0 km/h",
     val altitude: String = "0 m",
     val elevationGain: String = "0",
     val elevationLoss: String = "0",

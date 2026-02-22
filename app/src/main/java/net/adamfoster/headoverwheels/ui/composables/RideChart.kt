@@ -21,10 +21,12 @@ fun RideChart(
     speedData: List<Entry>,
     elevationData: List<Entry>,
     startingElevation: Float? = null,
+    isDarkTheme: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val speedColor = AndroidColor.GREEN
-    val elevationColor = AndroidColor.LTGRAY
+    val elevationColor = if (isDarkTheme) AndroidColor.LTGRAY else AndroidColor.DKGRAY
+    val textColor = if (isDarkTheme) AndroidColor.LTGRAY else AndroidColor.DKGRAY
 
     val decimalFormatter = object : ValueFormatter() {
         override fun getFormattedValue(value: Float): String {
@@ -47,30 +49,35 @@ fun RideChart(
                 setPinchZoom(false)
                 setDrawGridBackground(false)
                 legend.isEnabled = true
-                legend.textColor = AndroidColor.DKGRAY
+                legend.textColor = textColor
 
                 xAxis.apply {
                     position = XAxis.XAxisPosition.BOTTOM
                     setDrawGridLines(false)
-                    textColor = AndroidColor.DKGRAY
+                    this.textColor = textColor
                     setDrawLabels(false)
                 }
-                
+
                 axisLeft.apply {
-                    textColor = speedColor
+                    this.textColor = speedColor
                     setDrawGridLines(true)
                     valueFormatter = decimalFormatter
                     axisMinimum = 0f
                 }
-                
+
                 axisRight.apply {
-                    textColor = elevationColor
+                    this.textColor = elevationColor
                     setDrawGridLines(false)
                     valueFormatter = decimalFormatter
                 }
             }
         },
         update = { chart ->
+            // Update colours on recomposition (e.g. theme switch)
+            chart.legend.textColor = textColor
+            chart.xAxis.textColor = textColor
+            chart.axisRight.textColor = elevationColor
+
             if (speedData.isEmpty() && elevationData.isEmpty()) {
                 chart.clear()
                 return@AndroidView
@@ -103,7 +110,7 @@ fun RideChart(
                     lineColor = elevationColor
                     lineWidth = 1f
                     enableDashedLine(10f, 10f, 0f)
-                    textColor = elevationColor
+                    this.textColor = elevationColor
                     textSize = 10f
                 }
                 chart.axisRight.addLimitLine(limitLine)
@@ -111,7 +118,7 @@ fun RideChart(
 
             chart.setVisibleXRangeMaximum(100f)
             chart.moveViewToX(speedData.lastOrNull()?.x ?: 0f)
-            
+
             chart.invalidate()
         }
     )
