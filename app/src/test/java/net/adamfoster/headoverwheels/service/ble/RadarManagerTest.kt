@@ -32,7 +32,7 @@ class RadarManagerTest {
         // header + one complete triplet (dist=50) + 2-byte stub (incomplete)
         val value = byteArrayOf(0x01, 0x01, 50, 0x00, 0x02, 0x14)
         manager.onCharacteristicChanged(uuid, value)
-        // Only the complete triplet is read — distance should be 50, not 0x02 (the stub's ID byte)
+        // Only the complete triplet is read — distance should be 50, not 20 (0x14, the stub's distance byte)
         verify { repository.updateRadarDistance(50) }
     }
 
