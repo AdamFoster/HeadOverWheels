@@ -48,7 +48,7 @@ class BleService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        // Notification starts on ride start
+        // Service enters foreground immediately to survive BLE scanning on Android 8+
 
         val bluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
