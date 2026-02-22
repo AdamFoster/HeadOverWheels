@@ -21,10 +21,7 @@ class MainViewModelTest {
 
     @Before
     fun setup() {
-        RideRepository.resetRide()
-        RideRepository.updateGpsStatus("Acquiring...")
-        RideRepository.updateHrSensorStatus("disconnected")
-        RideRepository.updateRadarSensorStatus("disconnected", false)
+        RideRepository.resetAll()
         viewModel = MainViewModel()
     }
 

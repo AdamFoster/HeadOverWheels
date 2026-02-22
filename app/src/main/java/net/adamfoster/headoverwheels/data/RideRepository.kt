@@ -160,4 +160,16 @@ object RideRepository {
         _isRecording.value = false
         // Don't reset sensor connection statuses
     }
+
+    fun resetAll() {
+        resetRide()
+        _gpsStatus.value = "Acquiring..."
+        _hrSensorStatus.value = "disconnected"
+        _radarSensorStatus.value = "disconnected"
+        _isRadarConnected.value = false
+        _scannedDevices.value = emptyList()
+        _targetHrAddress.value = null
+        _targetRadarAddress.value = null
+        _themeMode.value = ThemeMode.SYSTEM
+    }
 }
