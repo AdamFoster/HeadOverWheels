@@ -125,6 +125,7 @@ class LocationService : Service() {
             }
         }
 
+        startLocationUpdates()
     }
 
     private fun createNotificationChannel() {
@@ -167,8 +168,6 @@ class LocationService : Service() {
                 stopForeground(STOP_FOREGROUND_REMOVE)
             }
         }
-        
-        startLocationUpdates()
         return START_STICKY
     }
 

@@ -65,6 +65,8 @@ class BleService : Service() {
             // Callback for Radar Alert
             toneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 375)
         }
+
+        startForeground(NOTIFICATION_ID, createNotification("Sensors Active"))
     }
 
     private fun createNotificationChannel() {
@@ -96,10 +98,10 @@ class BleService : Service() {
         when (intent?.action) {
             ACTION_START_SCAN -> startScanning()
             ACTION_START_RIDE -> {
-                startForeground(NOTIFICATION_ID, createNotification("Sensors Connected (Ride Active)"))
+                updateNotification("Sensors Connected (Ride Active)")
             }
             ACTION_RESET_RIDE -> {
-                stopForeground(STOP_FOREGROUND_REMOVE)
+                updateNotification("Sensors Active")
             }
             ACTION_CONNECT_DEVICE -> {
                 val address = intent.getStringExtra(EXTRA_DEVICE_ADDRESS)
