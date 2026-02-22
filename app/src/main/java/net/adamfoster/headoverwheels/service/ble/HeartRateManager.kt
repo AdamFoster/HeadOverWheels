@@ -1,10 +1,8 @@
 package net.adamfoster.headoverwheels.service.ble
 
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
-import android.content.Context
 import android.os.Build
 import android.util.Log
 import net.adamfoster.headoverwheels.data.RideRepository
@@ -22,17 +20,6 @@ class HeartRateManager(private val repository: RideRepository) : BleSensorManage
 
     override fun getServiceUuid(): UUID = HEART_RATE_SERVICE_UUID
 
-    override fun onDeviceFound(device: BluetoothDevice, context: Context, callback: (BluetoothGatt?) -> Unit) {
-        if (gatt == null) {
-            Log.i("HeartRateManager", "Connecting to HR Sensor: ${device.address}")
-            // Note: The actual connection call is done by the Service using the shared callback
-            // This is slightly tricky as we need to pass the specific gatt back to the service if we were initiating here
-            // But the service initiates the connection. 
-            // We will let the service handle the `connectGatt` and pass the resulting gatt to `onConnected`
-            // Wait, the service's `onScanResult` calls `device.connectGatt`.
-        }
-    }
-    
     // Helper to check if we are already connected
     fun isConnected(): Boolean = gatt != null
     

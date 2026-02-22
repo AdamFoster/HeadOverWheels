@@ -21,7 +21,8 @@ abstract class RideDatabase : RoomDatabase() {
                     context.applicationContext,
                     RideDatabase::class.java,
                     "ride_database"
-                ).build()
+                ).fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

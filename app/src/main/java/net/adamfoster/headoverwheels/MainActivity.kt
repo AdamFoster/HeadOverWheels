@@ -30,6 +30,9 @@ class MainActivity : ComponentActivity() {
             if (locationGranted) {
                 startLocationService()
             }
+            // BLUETOOTH_SCAN and BLUETOOTH_CONNECT are only requested on API 31+.
+            // On older APIs they are absent from the result map, so ?: true correctly
+            // treats their absence as "granted" (the permissions did not exist pre-31).
             val bluetoothScanGranted = permissions[Manifest.permission.BLUETOOTH_SCAN] ?: true
             val bluetoothConnectGranted = permissions[Manifest.permission.BLUETOOTH_CONNECT] ?: true
             

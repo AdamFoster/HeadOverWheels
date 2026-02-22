@@ -1,10 +1,8 @@
 package net.adamfoster.headoverwheels.service.ble
 
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
-import android.content.Context
 import android.os.Build
 import net.adamfoster.headoverwheels.data.RideRepository
 import java.util.UUID
@@ -24,10 +22,6 @@ class RadarManager(
     private var lastDistance = -1
 
     override fun getServiceUuid(): UUID = RADAR_SERVICE_UUID
-
-    override fun onDeviceFound(device: BluetoothDevice, context: Context, callback: (BluetoothGatt?) -> Unit) {
-         // Logic handled by service to initiate connection
-    }
 
     fun isConnected(): Boolean = gatt != null
 
