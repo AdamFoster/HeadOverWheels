@@ -105,7 +105,7 @@ class MainViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             combine(repository.speed, repository.altitude) { speed, altitude ->
-                Pair(speed, altitude)
+                speed to altitude
             }.collect { (speed, altitude) ->
                 chartMutex.withLock {
                     val speedKmh = speed * 3.6f
