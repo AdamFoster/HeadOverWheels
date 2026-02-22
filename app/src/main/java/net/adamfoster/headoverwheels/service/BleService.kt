@@ -221,7 +221,9 @@ class BleService : Service() {
                 hrManager.onDisconnected()
                 gatt.close()
                 updateNotification("HR Disconnected")
-                // Only auto-scan if this was not a user-initiated disconnect
+                // Only auto-scan if this was not a user-initiated disconnect.
+                // disconnectDevice() clears targetHrAddress before calling gatt.disconnect(),
+                // so the BLE stack delivers this callback after that write is visible.
                 if (RideRepository.targetHrAddress.value != null) startScanning()
             }
         }
@@ -251,6 +253,9 @@ class BleService : Service() {
                 radarManager.onDisconnected()
                 gatt.close()
                 updateNotification("Radar Disconnected")
+                // Only auto-scan if this was not a user-initiated disconnect.
+                // disconnectDevice() clears targetRadarAddress before calling gatt.disconnect(),
+                // so the BLE stack delivers this callback after that write is visible.
                 if (RideRepository.targetRadarAddress.value != null) startScanning()
             }
         }
