@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.adamfoster.headoverwheels.data.RideRepository
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -20,6 +22,7 @@ class MainViewModel : ViewModel() {
     private val _elevationData = MutableStateFlow<List<Entry>>(emptyList())
     private val _startingElevation = MutableStateFlow<Float?>(null)
     private var dataPointIndex = 0f
+    private val chartMutex = Mutex()
 
     // Chunk 1: Primary Metrics
     private val metricsFlow = combine(
@@ -101,39 +104,44 @@ class MainViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-             repository.speed.collect { speed ->
-                 val altitude = repository.altitude.value
-                 val speedKmh = speed * 3.6f
-                 
-                 if (_startingElevation.value == null && altitude != 0.0) {
-                     _startingElevation.value = altitude.toFloat()
-                 }
+            combine(repository.speed, repository.altitude) { speed, altitude ->
+                Pair(speed, altitude)
+            }.collect { (speed, altitude) ->
+                chartMutex.withLock {
+                    val speedKmh = speed * 3.6f
 
-                 val currentSpeedList = _speedData.value.toMutableList()
-                 val currentElevList = _elevationData.value.toMutableList()
-            
-                 currentSpeedList.add(Entry(dataPointIndex, speedKmh))
-                 currentElevList.add(Entry(dataPointIndex, altitude.toFloat()))
-            
-                 if (currentSpeedList.size > 300) {
-                     currentSpeedList.removeAt(0)
-                     currentElevList.removeAt(0)
-                 }
-            
-                 _speedData.value = currentSpeedList
-                 _elevationData.value = currentElevList
-                 dataPointIndex += 1f
-             }
+                    if (_startingElevation.value == null && altitude != 0.0) {
+                        _startingElevation.value = altitude.toFloat()
+                    }
+
+                    val currentSpeedList = _speedData.value.toMutableList()
+                    val currentElevList = _elevationData.value.toMutableList()
+
+                    currentSpeedList.add(Entry(dataPointIndex, speedKmh))
+                    currentElevList.add(Entry(dataPointIndex, altitude.toFloat()))
+
+                    if (currentSpeedList.size > 300) {
+                        currentSpeedList.removeAt(0)
+                        currentElevList.removeAt(0)
+                    }
+
+                    _speedData.value = currentSpeedList
+                    _elevationData.value = currentElevList
+                    dataPointIndex += 1f
+                }
+            }
         }
-        
+
         viewModelScope.launch {
             repository.distance.collect { distance ->
-                 if (distance == 0.0) {
-                     _speedData.value = emptyList()
-                     _elevationData.value = emptyList()
-                     _startingElevation.value = null
-                     dataPointIndex = 0f
-                 }
+                if (distance == 0.0) {
+                    chartMutex.withLock {
+                        _speedData.value = emptyList()
+                        _elevationData.value = emptyList()
+                        _startingElevation.value = null
+                        dataPointIndex = 0f
+                    }
+                }
             }
         }
     }
