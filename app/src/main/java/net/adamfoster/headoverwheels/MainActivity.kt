@@ -8,6 +8,9 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
@@ -56,6 +59,26 @@ class MainActivity : ComponentActivity() {
             net.adamfoster.headoverwheels.ui.theme.HeadOverWheelsTheme(
                 themeMode = mainUiState.themeMode
             ) {
+                if (mainUiState.hasPendingRecovery) {
+                    AlertDialog(
+                        onDismissRequest = {},
+                        title = { Text("Ride Recovery") },
+                        text = {
+                            Text("A ride was in progress (${mainUiState.distance}, ${mainUiState.elapsedTime}).")
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { mainViewModel.dismissRecovery() }) {
+                                Text("Resume")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { resetRide() }) {
+                                Text("Discard")
+                            }
+                        }
+                    )
+                }
+
                 NavHost(navController = navController, startDestination = "main") {
                     composable("main") {
                         MainScreen(
