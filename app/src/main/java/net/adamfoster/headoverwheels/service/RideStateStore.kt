@@ -14,6 +14,8 @@ class RideStateStore(context: Context) {
     )
 
     fun savePendingRide(distance: Double, gain: Double, loss: Double, elapsedMs: Long) {
+        // SharedPreferences has no putDouble; Float precision (~7 sig figs) is sufficient for
+        // ride distances (sub-metre accuracy at up to ~16,000 km) and elevation values.
         prefs.edit()
             .putBoolean("ride_pending", true)
             .putFloat("ride_distance", distance.toFloat())
