@@ -73,6 +73,10 @@ object RideRepository {
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
+    private val _hasPendingRecovery = MutableStateFlow(false)
+    val hasPendingRecovery: StateFlow<Boolean> = _hasPendingRecovery.asStateFlow()
+    fun setHasPendingRecovery(value: Boolean) { _hasPendingRecovery.value = value }
+
     // Update methods called by Services
 
     fun setThemeMode(mode: ThemeMode) {
@@ -159,6 +163,7 @@ object RideRepository {
         _heartRate.value = 0
         _radarDistance.value = -1
         _isRecording.value = false
+        _hasPendingRecovery.value = false
         // Don't reset sensor connection statuses
     }
 

@@ -68,4 +68,17 @@ class RideRepositoryTest {
         assertEquals("active", RideRepository.radarSensorStatus.first())
         assertEquals(true, RideRepository.isRadarConnected.first())
     }
+
+    @Test
+    fun `setHasPendingRecovery true is observable`() = runTest {
+        RideRepository.setHasPendingRecovery(true)
+        assertEquals(true, RideRepository.hasPendingRecovery.first())
+    }
+
+    @Test
+    fun `resetRide resets hasPendingRecovery`() = runTest {
+        RideRepository.setHasPendingRecovery(true)
+        RideRepository.resetRide()
+        assertEquals(false, RideRepository.hasPendingRecovery.first())
+    }
 }
