@@ -18,6 +18,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import net.adamfoster.headoverwheels.data.RideData
 import net.adamfoster.headoverwheels.data.RideRepository
 import net.adamfoster.headoverwheels.db.RideDatabase
@@ -50,6 +53,7 @@ class LocationService : Service() {
     private lateinit var db: RideDatabase
     private val scope = CoroutineScope(Dispatchers.IO)
     private val repository = RideRepository
+    private lateinit var rideStateStore: RideStateStore
 
     override fun onCreate() {
         super.onCreate()
@@ -58,6 +62,21 @@ class LocationService : Service() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         db = RideDatabase.getDatabase(this)
+
+        rideStateStore = RideStateStore(this)
+
+        val pending = rideStateStore.loadPendingRide()
+        if (pending != null) {
+            totalDistance = pending.distance
+            totalElevationGain = pending.gain
+            totalElevationLoss = pending.loss
+            elapsedTimeOffset = pending.elapsedMs
+            // isRecording stays false — always restore to paused state regardless of recording state at death
+            repository.updateDistance(totalDistance)
+            repository.updateElevationGainLoss(totalElevationGain, totalElevationLoss)
+            repository.updateElapsedTime(elapsedTimeOffset)
+            repository.setHasPendingRecovery(true)
+        }
 
         locationCallback = object : LocationCallback() {
             override fun onLocationAvailability(availability: LocationAvailability) {
@@ -87,6 +106,7 @@ class LocationService : Service() {
                         val elevDelta = elevationCalculator.update(location.altitude)
                         totalElevationGain += elevDelta.gain
                         totalElevationLoss += elevDelta.loss
+                        rideStateStore.savePendingRide(totalDistance, totalElevationGain, totalElevationLoss, elapsedTimeOffset)
                     }
 
                     // Incline Calculation
@@ -117,12 +137,14 @@ class LocationService : Service() {
             }
         }
 
-        // Timer Loop
+        // Timer Loop — suspends completely when not recording via flatMapLatest
         scope.launch(Dispatchers.Default) {
-            while (true) {
-                repository.updateElapsedTime(getElapsedTime())
-                delay(1000)
-            }
+            repository.isRecording
+                .flatMapLatest { recording ->
+                    if (recording) flow { while (true) { emit(Unit); delay(1000) } }
+                    else emptyFlow()
+                }
+                .collect { repository.updateElapsedTime(getElapsedTime()) }
         }
 
         startLocationUpdates()
@@ -175,6 +197,7 @@ class LocationService : Service() {
         if (!isRecording) {
             isRecording = true
             startTime = System.currentTimeMillis()
+            rideStateStore.savePendingRide(totalDistance, totalElevationGain, totalElevationLoss, elapsedTimeOffset)
             repository.updateRecordingStatus(true)
         }
     }
@@ -183,6 +206,7 @@ class LocationService : Service() {
         if (isRecording) {
             isRecording = false
             elapsedTimeOffset += System.currentTimeMillis() - startTime
+            rideStateStore.savePendingRide(totalDistance, totalElevationGain, totalElevationLoss, elapsedTimeOffset)
             repository.updateRecordingStatus(false)
             elevationCalculator.reset()
         }
@@ -197,6 +221,7 @@ class LocationService : Service() {
         totalElevationLoss = 0.0
         inclineCalculator.reset()
         elevationCalculator.reset()
+        rideStateStore.clearPendingRide()
         repository.resetRide()
     }
     
