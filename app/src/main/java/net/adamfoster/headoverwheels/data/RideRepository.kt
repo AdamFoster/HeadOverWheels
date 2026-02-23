@@ -75,13 +75,13 @@ object RideRepository {
 
     private val _hasPendingRecovery = MutableStateFlow(false)
     val hasPendingRecovery: StateFlow<Boolean> = _hasPendingRecovery.asStateFlow()
-    fun setHasPendingRecovery(value: Boolean) { _hasPendingRecovery.value = value }
 
     // Update methods called by Services
 
     fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
     }
+    fun setHasPendingRecovery(value: Boolean) { _hasPendingRecovery.value = value }
 
     fun addScannedDevice(device: ScannedDevice) {
         _scannedDevices.update { currentList ->
