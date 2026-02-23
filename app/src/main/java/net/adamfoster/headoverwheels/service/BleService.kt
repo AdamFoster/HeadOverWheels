@@ -44,6 +44,7 @@ class BleService : Service() {
     private var toneGenerator: ToneGenerator? = null
 
     private var isScanning = false
+    private lateinit var rideStateStore: RideStateStore
 
     override fun onCreate() {
         super.onCreate()
@@ -67,6 +68,14 @@ class BleService : Service() {
         }
 
         startForeground(NOTIFICATION_ID, createNotification("Sensors Active"))
+
+        rideStateStore = RideStateStore(this)
+
+        val hrAddress = rideStateStore.loadHrAddress()
+        val radarAddress = rideStateStore.loadRadarAddress()
+        if (hrAddress != null) RideRepository.setTargetHrDevice(hrAddress)
+        if (radarAddress != null) RideRepository.setTargetRadarDevice(radarAddress)
+        if (hrAddress != null || radarAddress != null) startScanning()
     }
 
     private fun createNotificationChannel() {
@@ -149,9 +158,11 @@ class BleService : Service() {
         }
         if (type == "HR") {
             RideRepository.setTargetHrDevice(address)
+            rideStateStore.saveHrAddress(address)
             hrManager.setGatt(device.connectGatt(this, false, hrGattCallback))
         } else if (type == "RADAR") {
             RideRepository.setTargetRadarDevice(address)
+            rideStateStore.saveRadarAddress(address)
             radarManager.setGatt(device.connectGatt(this, false, radarGattCallback))
         }
     }
@@ -159,11 +170,13 @@ class BleService : Service() {
     private fun disconnectDevice(type: String) {
         if (type == "HR") {
             RideRepository.setTargetHrDevice(null)
+            rideStateStore.saveHrAddress(null)
             hrManager.getGatt()?.disconnect()
             // Cleanup happens in callback
         }
         if (type == "RADAR") {
             RideRepository.setTargetRadarDevice(null)
+            rideStateStore.saveRadarAddress(null)
             radarManager.getGatt()?.disconnect()
             // Cleanup happens in callback
         }
