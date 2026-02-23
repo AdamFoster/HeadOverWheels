@@ -54,6 +54,8 @@ class MainViewModel : ViewModel() {
         repository.elevationLoss
     ) { gps, recording, radarConn, elevGain, elevLoss ->
         StatusChunk(gps, recording, radarConn, elevGain, elevLoss)
+    }.combine(repository.hasPendingRecovery) { chunk, pending ->
+        chunk.copy(hasPendingRecovery = pending)
     }
 
     // Chunk 4: Chart Data
@@ -91,6 +93,7 @@ class MainViewModel : ViewModel() {
             radarSensorStatus = sensors.radarSensorStatus,
             isRecording = status.isRecording,
             isRadarConnected = status.isRadarConnected,
+            hasPendingRecovery = status.hasPendingRecovery,
             speedData = chartData.speedData,
             elevationData = chartData.elevationData,
             startingElevation = chartData.startingElevation,
@@ -146,6 +149,10 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun dismissRecovery() {
+        repository.setHasPendingRecovery(false)
+    }
+
     private fun formatElapsedTime(millis: Long): String {
         val seconds = (millis / 1000) % 60
         val minutes = (millis / (1000 * 60)) % 60
@@ -174,7 +181,8 @@ private data class StatusChunk(
     val isRecording: Boolean,
     val isRadarConnected: Boolean,
     val elevationGain: Double,
-    val elevationLoss: Double
+    val elevationLoss: Double,
+    val hasPendingRecovery: Boolean = false
 )
 
 private data class ChartDataChunk(

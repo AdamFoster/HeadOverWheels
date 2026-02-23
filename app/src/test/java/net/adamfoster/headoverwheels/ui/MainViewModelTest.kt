@@ -63,4 +63,17 @@ class MainViewModelTest {
         
         job.cancel()
     }
+
+    @Test
+    fun `uiState hasPendingRecovery reflects repository state`() = runTest {
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect {}
+        }
+
+        RideRepository.setHasPendingRecovery(true)
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.uiState.value.hasPendingRecovery)
+        job.cancel()
+    }
 }

@@ -22,6 +22,7 @@ data class RideUiState(
     
     val isRecording: Boolean = false,
     val isRadarConnected: Boolean = false,
+    val hasPendingRecovery: Boolean = false,
     
     // Chart Data
     val speedData: List<Entry> = emptyList(),
