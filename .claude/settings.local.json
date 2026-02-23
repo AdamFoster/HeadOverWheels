@@ -6,7 +6,11 @@
       "Bash(./gradlew test:*)",
       "Bash(./gradlew :app:testDebugUnitTest:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(wait:*)",
+      "Bash(git:*)",
+      "Bash(head:*)"
     ]
   }
 }
