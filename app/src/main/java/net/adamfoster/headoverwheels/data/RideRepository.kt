@@ -81,6 +81,7 @@ object RideRepository {
     fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
     }
+
     fun setHasPendingRecovery(value: Boolean) { _hasPendingRecovery.value = value }
 
     fun addScannedDevice(device: ScannedDevice) {
